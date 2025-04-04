@@ -9,8 +9,8 @@
 		"Pixel Dream Studios"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/KevzCz/ExclusiveWeapon"
+		"homepage": "https://www.curseforge.com/minecraft/mc-mods/exclusive-item",
+		"sources": "https://github.com/KevzCz/ExclusiveItem"
 	},
 	"license": "GNU GPLv3",
 	"icon": "assets/exclusive-item/icon.png",
