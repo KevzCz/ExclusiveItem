@@ -3,15 +3,16 @@
 	"id": "exclusive-weapon",
 	"version": "${version}",
 	"name": "Exclusive Weapon",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Adds a tag that bounds a player to that item!",
 	"authors": [
-		"Me!"
+		"KevzCz",
+		"Pixel Dream Studios"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/KevzCz/ExclusiveWeapon"
 	},
-	"license": "CC0-1.0",
+	"license": "GNU GPLv3",
 	"icon": "assets/exclusive-weapon/icon.png",
 	"environment": "*",
 	"entrypoints": {
@@ -27,8 +28,5 @@
 		"minecraft": "~1.21.1",
 		"java": ">=21",
 		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
 	}
 }
