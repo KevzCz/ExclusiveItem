@@ -11,7 +11,12 @@
 		"PlayerEntityInteractMixin",
 		"BlockItemMixin",
 		"PlayerArmorTickMixin",
-		"ShieldItemMixin"
+		"ShieldItemMixin",
+		"CrossbowItemMixin",
+		"EnderPearlItemMixin",
+		"PotionItemMixin",
+		"SplashPotionItemMixin",
+		"LingeringPotionItemMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
