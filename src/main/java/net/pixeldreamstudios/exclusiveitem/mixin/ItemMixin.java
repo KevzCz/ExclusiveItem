@@ -5,7 +5,11 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.SwordItem;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
@@ -21,16 +25,15 @@ public class ItemMixin {
     @Inject(method = "postMine", at = @At("HEAD"), cancellable = true)
     private void preventMining(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity miner, CallbackInfoReturnable<Boolean> cir) {
         if (miner instanceof PlayerEntity player && !world.isClient &&
-                ExclusiveItemUtil.isExclusiveWeapon(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
+                ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
             player.sendMessage(Text.literal("You can't mine with this tool."), true);
             cir.setReturnValue(false);
         }
     }
-
     @Inject(method = "canMine", at = @At("HEAD"), cancellable = true)
     private void preventCanMine(BlockState state, World world, BlockPos pos, PlayerEntity miner, CallbackInfoReturnable<Boolean> cir) {
         ItemStack stack = miner.getMainHandStack();
-        if (!world.isClient && ExclusiveItemUtil.isExclusiveWeapon(stack) && !ExclusiveItemUtil.isOwner(stack, miner)) {
+        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, miner)) {
             cir.setReturnValue(false);
         }
     }
@@ -38,7 +41,7 @@ public class ItemMixin {
     @Inject(method = "onStoppedUsing", at = @At("HEAD"), cancellable = true)
     private void preventUseRelease(ItemStack stack, World world, LivingEntity user, int remainingUseTicks, CallbackInfo ci) {
         if (user instanceof PlayerEntity player && !world.isClient &&
-                ExclusiveItemUtil.isExclusiveWeapon(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
+                ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
             player.sendMessage(Text.literal("You can't use this item."), true);
             ci.cancel();
         }

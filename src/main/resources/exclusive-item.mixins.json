@@ -9,7 +9,8 @@
 		"BowItemMixin",
 		"PlayerAttackMixin",
 		"PlayerEntityInteractMixin",
-		"BlockItemMixin"
+		"BlockItemMixin",
+		"PlayerArmorTickMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

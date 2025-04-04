@@ -18,7 +18,7 @@ public class ExclusiveItemCommands {
     private static final HashSet<UUID> devBypass = new HashSet<>();
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        dispatcher.register(CommandManager.literal("exclusiveweapon")
+        dispatcher.register(CommandManager.literal("exclusiveitem")
                 .then(CommandManager.literal("add")
                         .executes(ctx -> {
                             ServerPlayerEntity player = ctx.getSource().getPlayer();
@@ -28,7 +28,7 @@ public class ExclusiveItemCommands {
                             NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
                             NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
 
-                            nbt.putBoolean("ExclusiveWeapon", true);
+                            nbt.putBoolean("ExclusiveItem", true);
                             stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
 
                             player.sendMessage(Text.literal("Item tagged as Exclusive.").formatted(Formatting.GREEN), false);
@@ -42,10 +42,10 @@ public class ExclusiveItemCommands {
                             UUID uuid = player.getUuid();
                             if (devBypass.contains(uuid)) {
                                 devBypass.remove(uuid);
-                                player.sendMessage(Text.literal("ExclusiveWeapon Dev Mode OFF").formatted(Formatting.RED), false);
+                                player.sendMessage(Text.literal("ExclusiveItem Dev Mode OFF").formatted(Formatting.RED), false);
                             } else {
                                 devBypass.add(uuid);
-                                player.sendMessage(Text.literal("ExclusiveWeapon Dev Mode ON").formatted(Formatting.AQUA), false);
+                                player.sendMessage(Text.literal("ExclusiveItem Dev Mode ON").formatted(Formatting.AQUA), false);
                             }
                             return 1;
                         }))

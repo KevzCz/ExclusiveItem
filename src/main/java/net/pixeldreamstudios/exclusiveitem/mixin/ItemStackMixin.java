@@ -29,7 +29,7 @@ public class ItemStackMixin {
 		ItemStack stack = (ItemStack)(Object)this;
 		if (!world.isClient && entity instanceof PlayerEntity player) {
 			if (!ExclusiveItemCommands.isBypassing(player.getUuid()) &&
-					ExclusiveItemUtil.isExclusiveWeapon(stack) &&
+					ExclusiveItemUtil.isExclusiveItem(stack) &&
 					!ExclusiveItemUtil.isOwned(stack)) {
 
 				ExclusiveItemUtil.bindToPlayer(stack, player);
@@ -58,7 +58,7 @@ public class ItemStackMixin {
 	private void addTooltip(Item.TooltipContext context, PlayerEntity player, TooltipType type, CallbackInfoReturnable<List<Text>> cir) {
 		ItemStack stack = (ItemStack)(Object)this;
 
-		if (ExclusiveItemUtil.isExclusiveWeapon(stack)) {
+		if (ExclusiveItemUtil.isExclusiveItem(stack)) {
 			List<Text> tooltip = cir.getReturnValue();
 
 			tooltip.add(Text.literal(""));

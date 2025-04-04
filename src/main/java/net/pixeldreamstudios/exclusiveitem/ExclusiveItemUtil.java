@@ -10,7 +10,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 public class ExclusiveItemUtil {
 
-    public static boolean isExclusiveWeapon(ItemStack stack) {
+    public static boolean isExclusiveItem(ItemStack stack) {
         NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
         return component != null && component.copyNbt().getBoolean("ExclusiveItem");
     }

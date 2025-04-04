@@ -23,7 +23,7 @@ public class BlockItemMixin {
 
         ItemStack stack = context.getStack();
 
-        if (ExclusiveItemUtil.isExclusiveWeapon(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
+        if (ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
             player.sendMessage(Text.literal("You can't place this block.").formatted(Formatting.RED), true);
             cir.setReturnValue(ActionResult.FAIL);
         }

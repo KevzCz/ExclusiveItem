@@ -18,7 +18,7 @@ public class SwordItemMixin {
     @Inject(method = "postHit", at = @At("HEAD"), cancellable = true)
     private void restrictAttack(ItemStack stack, LivingEntity target, LivingEntity attacker, CallbackInfoReturnable<Boolean> cir) {
         if (attacker instanceof PlayerEntity player && !player.getWorld().isClient &&
-                ExclusiveItemUtil.isExclusiveWeapon(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
+                ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
             player.sendMessage(Text.literal("You can't use this sword!").formatted(Formatting.RED), true);
             cir.setReturnValue(false);
         }

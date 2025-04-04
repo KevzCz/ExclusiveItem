@@ -25,7 +25,7 @@ public class PlayerEntityInteractMixin {
         ItemStack stack = player.getStackInHand(hand);
 
         if (!player.getWorld().isClient &&
-                ExclusiveItemUtil.isExclusiveWeapon(stack) &&
+                ExclusiveItemUtil.isExclusiveItem(stack) &&
                 !ExclusiveItemUtil.isOwner(stack, player)) {
             player.sendMessage(Text.literal("This item is exclusive to someone else.").formatted(net.minecraft.util.Formatting.RED), true);
             cir.setReturnValue(ActionResult.FAIL); // Cancels interaction like right-clicking on item frames

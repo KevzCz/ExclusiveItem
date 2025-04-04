@@ -19,7 +19,7 @@ public class PlayerAttackMixin {
         ItemStack stack = player.getMainHandStack();
 
         if (!player.getWorld().isClient &&
-                ExclusiveItemUtil.isExclusiveWeapon(stack) &&
+                ExclusiveItemUtil.isExclusiveItem(stack) &&
                 !ExclusiveItemUtil.isOwner(stack, player)) {
             player.sendMessage(Text.literal("You can't attack with this weapon.").formatted(net.minecraft.util.Formatting.RED), true);
             ci.cancel(); // Cancel the attack
