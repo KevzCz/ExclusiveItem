@@ -1,0 +1,17 @@
+{
+	"required": true,
+	"package": "net.pixeldreamstudios.exclusiveweapon.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ItemMixin",
+		"ItemStackMixin",
+		"SwordItemMixin",
+		"BowItemMixin",
+		"PlayerAttackMixin",
+		"PlayerEntityInteractMixin",
+		"BlockItemMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
