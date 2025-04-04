@@ -20,6 +20,7 @@ public class ExclusiveItemCommands {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("exclusiveitem")
                 .then(CommandManager.literal("add")
+                        .requires(source -> source.hasPermissionLevel(2))
                         .executes(ctx -> {
                             ServerPlayerEntity player = ctx.getSource().getPlayer();
                             if (player == null) return 0;
@@ -35,6 +36,7 @@ public class ExclusiveItemCommands {
                             return 1;
                         }))
                 .then(CommandManager.literal("dev")
+                        .requires(source -> source.hasPermissionLevel(2))
                         .executes(ctx -> {
                             ServerPlayerEntity player = ctx.getSource().getPlayer();
                             if (player == null) return 0;
@@ -47,6 +49,29 @@ public class ExclusiveItemCommands {
                                 devBypass.add(uuid);
                                 player.sendMessage(Text.literal("ExclusiveItem Dev Mode ON").formatted(Formatting.AQUA), false);
                             }
+                            return 1;
+                        }))
+                .then(CommandManager.literal("remove")
+                        .requires(source -> source.hasPermissionLevel(2))
+                        .executes(ctx -> {
+                            ServerPlayerEntity player = ctx.getSource().getPlayer();
+                            if (player == null) return 0;
+
+                            ItemStack stack = player.getMainHandStack();
+                            NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+                            NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
+
+                            if (!nbt.contains("ExclusiveItem")) {
+                                player.sendMessage(Text.literal("This item is not exclusive.").formatted(Formatting.YELLOW), false);
+                                return 1;
+                            }
+
+                            nbt.remove("ExclusiveItem");
+                            nbt.remove("exclusiveOwner");
+                            nbt.remove("exclusiveOwnerName");
+
+                            stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+                            player.sendMessage(Text.literal("Exclusive tag removed from item.").formatted(Formatting.RED), false);
                             return 1;
                         }))
         );
