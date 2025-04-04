@@ -17,7 +17,7 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.pixeldreamstudios.exclusiveweapon.ExclusiveItemMod"
+			"net.pixeldreamstudios.exclusiveitem.ExclusiveItemMod"
 		]
 	},
 	"mixins": [

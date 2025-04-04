@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "net.pixeldreamstudios.exclusiveweapon.mixin",
+	"package": "net.pixeldreamstudios.exclusiveitem.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"ItemMixin",
