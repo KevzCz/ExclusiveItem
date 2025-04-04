@@ -1,4 +1,4 @@
-package net.pixeldreamstudios.exclusiveweapon.mixin;
+package net.pixeldreamstudios.exclusiveitem.mixin;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -6,11 +6,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.pixeldreamstudios.exclusiveweapon.ExclusiveWeaponUtil;
+import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PlayerEntity.class)
@@ -26,8 +25,8 @@ public class PlayerEntityInteractMixin {
         ItemStack stack = player.getStackInHand(hand);
 
         if (!player.getWorld().isClient &&
-                ExclusiveWeaponUtil.isExclusiveWeapon(stack) &&
-                !ExclusiveWeaponUtil.isOwner(stack, player)) {
+                ExclusiveItemUtil.isExclusiveWeapon(stack) &&
+                !ExclusiveItemUtil.isOwner(stack, player)) {
             player.sendMessage(Text.literal("This item is exclusive to someone else.").formatted(net.minecraft.util.Formatting.RED), true);
             cir.setReturnValue(ActionResult.FAIL); // Cancels interaction like right-clicking on item frames
         }

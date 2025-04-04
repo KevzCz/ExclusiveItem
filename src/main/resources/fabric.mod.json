@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "exclusive-weapon",
+	"id": "exclusive-item",
 	"version": "${version}",
 	"name": "Exclusive Weapon",
 	"description": "Adds a tag that bounds a player to that item!",
@@ -13,15 +13,15 @@
 		"sources": "https://github.com/KevzCz/ExclusiveWeapon"
 	},
 	"license": "GNU GPLv3",
-	"icon": "assets/exclusive-weapon/icon.png",
+	"icon": "assets/exclusive-item/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.pixeldreamstudios.exclusiveweapon.ExclusiveWeaponMod"
+			"net.pixeldreamstudios.exclusiveweapon.ExclusiveItemMod"
 		]
 	},
 	"mixins": [
-		"exclusive-weapon.mixins.json"
+		"exclusive-item.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.10",

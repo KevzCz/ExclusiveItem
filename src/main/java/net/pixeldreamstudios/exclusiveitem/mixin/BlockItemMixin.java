@@ -1,6 +1,5 @@
-package net.pixeldreamstudios.exclusiveweapon.mixin;
+package net.pixeldreamstudios.exclusiveitem.mixin;
 
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
@@ -8,7 +7,7 @@ import net.minecraft.item.ItemUsageContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
-import net.pixeldreamstudios.exclusiveweapon.ExclusiveWeaponUtil;
+import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,7 +23,7 @@ public class BlockItemMixin {
 
         ItemStack stack = context.getStack();
 
-        if (ExclusiveWeaponUtil.isExclusiveWeapon(stack) && !ExclusiveWeaponUtil.isOwner(stack, player)) {
+        if (ExclusiveItemUtil.isExclusiveWeapon(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
             player.sendMessage(Text.literal("You can't place this block.").formatted(Formatting.RED), true);
             cir.setReturnValue(ActionResult.FAIL);
         }

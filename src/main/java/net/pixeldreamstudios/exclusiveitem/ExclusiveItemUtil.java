@@ -1,4 +1,4 @@
-package net.pixeldreamstudios.exclusiveweapon;
+package net.pixeldreamstudios.exclusiveitem;
 
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
@@ -8,11 +8,11 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 
-public class ExclusiveWeaponUtil {
+public class ExclusiveItemUtil {
 
     public static boolean isExclusiveWeapon(ItemStack stack) {
         NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        return component != null && component.copyNbt().getBoolean("ExclusiveWeapon");
+        return component != null && component.copyNbt().getBoolean("ExclusiveItem");
     }
 
     public static boolean isOwned(ItemStack stack) {
@@ -32,7 +32,7 @@ public class ExclusiveWeaponUtil {
     }
 
     public static boolean isOwner(ItemStack stack, PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity serverPlayer && ExclusiveWeaponCommands.isBypassing(serverPlayer)) return true;
+        if (player instanceof ServerPlayerEntity serverPlayer && ExclusiveItemCommands.isBypassing(serverPlayer)) return true;
 
         NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
         if (component == null) return false;

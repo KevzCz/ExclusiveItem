@@ -1,4 +1,4 @@
-package net.pixeldreamstudios.exclusiveweapon.mixin;
+package net.pixeldreamstudios.exclusiveitem.mixin;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -12,8 +12,8 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
-import net.pixeldreamstudios.exclusiveweapon.ExclusiveWeaponCommands;
-import net.pixeldreamstudios.exclusiveweapon.ExclusiveWeaponUtil;
+import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
+import net.pixeldreamstudios.exclusiveitem.ExclusiveItemCommands;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,11 +28,11 @@ public class ItemStackMixin {
 	private void bindToPlayerOnTick(World world, Entity entity, int slot, boolean selected, CallbackInfo ci) {
 		ItemStack stack = (ItemStack)(Object)this;
 		if (!world.isClient && entity instanceof PlayerEntity player) {
-			if (!ExclusiveWeaponCommands.isBypassing(player.getUuid()) &&
-					ExclusiveWeaponUtil.isExclusiveWeapon(stack) &&
-					!ExclusiveWeaponUtil.isOwned(stack)) {
+			if (!ExclusiveItemCommands.isBypassing(player.getUuid()) &&
+					ExclusiveItemUtil.isExclusiveWeapon(stack) &&
+					!ExclusiveItemUtil.isOwned(stack)) {
 
-				ExclusiveWeaponUtil.bindToPlayer(stack, player);
+				ExclusiveItemUtil.bindToPlayer(stack, player);
 
 				// 🎇 PLAY BINDING EFFECT
 				world.playSound(null, player.getBlockPos(), SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.PLAYERS, 0.4f, 1.5f);
@@ -58,16 +58,16 @@ public class ItemStackMixin {
 	private void addTooltip(Item.TooltipContext context, PlayerEntity player, TooltipType type, CallbackInfoReturnable<List<Text>> cir) {
 		ItemStack stack = (ItemStack)(Object)this;
 
-		if (ExclusiveWeaponUtil.isExclusiveWeapon(stack)) {
+		if (ExclusiveItemUtil.isExclusiveWeapon(stack)) {
 			List<Text> tooltip = cir.getReturnValue();
 
 			tooltip.add(Text.literal(""));
 			tooltip.add(Text.literal("⚔ Exclusive Item")
 					.formatted(Formatting.DARK_PURPLE, Formatting.BOLD));
 
-			if (ExclusiveWeaponUtil.isOwned(stack)) {
+			if (ExclusiveItemUtil.isOwned(stack)) {
 				tooltip.add(Text.literal("Bound to: ")
-						.append(Text.literal(ExclusiveWeaponUtil.getOwnerName(stack))
+						.append(Text.literal(ExclusiveItemUtil.getOwnerName(stack))
 								.formatted(Formatting.GOLD))
 						.formatted(Formatting.GRAY));
 			} else {

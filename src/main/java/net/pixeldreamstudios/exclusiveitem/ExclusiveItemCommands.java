@@ -1,4 +1,4 @@
-package net.pixeldreamstudios.exclusiveweapon;
+package net.pixeldreamstudios.exclusiveitem;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.component.DataComponentTypes;
@@ -14,7 +14,7 @@ import net.minecraft.util.Formatting;
 import java.util.HashSet;
 import java.util.UUID;
 
-public class ExclusiveWeaponCommands {
+public class ExclusiveItemCommands {
     private static final HashSet<UUID> devBypass = new HashSet<>();
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
