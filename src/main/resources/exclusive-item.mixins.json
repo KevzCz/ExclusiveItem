@@ -16,7 +16,8 @@
 		"EnderPearlItemMixin",
 		"PotionItemMixin",
 		"SplashPotionItemMixin",
-		"LingeringPotionItemMixin"
+		"LingeringPotionItemMixin",
+		"ClientPlayerEntityMixin_CastBlock"
 	],
 	"injectors": {
 		"defaultRequire": 1
