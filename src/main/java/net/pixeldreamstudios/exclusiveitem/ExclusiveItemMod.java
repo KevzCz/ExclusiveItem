@@ -12,8 +12,8 @@ public class ExclusiveItemMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Exclusive Item mod initialized.");
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) -> {
-			ExclusiveItemCommands.register(dispatcher);
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+			ExclusiveItemCommands.register(dispatcher, registryAccess);
 		});
 	}
 }

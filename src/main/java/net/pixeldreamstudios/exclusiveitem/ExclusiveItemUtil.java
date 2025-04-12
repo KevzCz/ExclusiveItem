@@ -3,9 +3,12 @@ package net.pixeldreamstudios.exclusiveitem;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+
+import java.util.UUID;
 
 
 public class ExclusiveItemUtil {
@@ -47,5 +50,21 @@ public class ExclusiveItemUtil {
         if (component == null) return "Nobody";
         NbtCompound nbt = component.copyNbt();
         return nbt.getString("exclusiveOwnerName");
+    }
+    public static ItemStack createExclusiveItemOwnedBySomebodyElse(Item item) {
+        ItemStack stack = new ItemStack(item);
+
+        NbtCompound nbt = new NbtCompound();
+        nbt.putBoolean("ExclusiveItem", true);
+
+        // Fake UUID (stable)
+        UUID fakeOwnerUUID = UUID.nameUUIDFromBytes("SomebodyElse".getBytes());
+
+        nbt.putUuid("exclusiveOwner", fakeOwnerUUID);
+        nbt.putString("exclusiveOwnerName", "SomebodyElse");
+
+        stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+
+        return stack;
     }
 }

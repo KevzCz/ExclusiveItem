@@ -1,23 +1,32 @@
 package net.pixeldreamstudios.exclusiveitem;
 
 import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.argument.ItemStackArgument;
+import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-
+import net.minecraft.command.argument.ItemStackArgumentType;
+import net.minecraft.command.argument.ItemStackArgument;
+import net.minecraft.registry.Registries;
+import com.mojang.brigadier.arguments.ArgumentType;
+import static net.minecraft.server.command.CommandManager.argument;
 import java.util.HashSet;
 import java.util.UUID;
 
 public class ExclusiveItemCommands {
     private static final HashSet<UUID> devBypass = new HashSet<>();
 
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         dispatcher.register(CommandManager.literal("exclusiveitem")
                 .then(CommandManager.literal("add")
                         .requires(source -> source.hasPermissionLevel(2))
@@ -74,6 +83,25 @@ public class ExclusiveItemCommands {
                             player.sendMessage(Text.literal("Exclusive tag removed from item.").formatted(Formatting.RED), false);
                             return 1;
                         }))
+                .then(CommandManager.literal("givefake")
+                        .requires(source -> source.hasPermissionLevel(2))
+                        .then(CommandManager.argument("item", ItemStackArgumentType.itemStack(registryAccess))
+
+                                .executes(ctx -> {
+                                    ServerPlayerEntity player = ctx.getSource().getPlayer();
+                                    if (player == null) return 0;
+
+                                    ItemStackArgument itemArg = ItemStackArgumentType.getItemStackArgument(ctx, "item");
+                                    ItemStack baseStack = itemArg.createStack(1, false);
+
+                                    ItemStack exclusiveStack = ExclusiveItemUtil.createExclusiveItemOwnedBySomebodyElse(baseStack.getItem());
+                                    player.getInventory().offerOrDrop(exclusiveStack);
+
+                                    player.sendMessage(Text.literal("Given exclusive item owned by SomebodyElse").formatted(Formatting.AQUA), false);
+                                    return 1;
+                                })
+                        )
+                )
         );
     }
 
