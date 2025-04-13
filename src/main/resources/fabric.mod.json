@@ -28,7 +28,8 @@
 		"minecraft": "~1.21.1",
 		"java": ">=21",
 		"fabric-api": "*",
-		"spell_engine": "*"
+		"spell_engine": "*",
+		"trinkets": "*"
 	}
 
 }

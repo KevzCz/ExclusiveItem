@@ -108,6 +108,9 @@ public class ExclusiveItemCommands {
     public static boolean isBypassing(ServerPlayerEntity player) {
         return devBypass.contains(player.getUuid());
     }
+    public static void clearDevBypass() {
+        devBypass.clear();
+    }
 
     public static boolean isBypassing(UUID uuid) {
         return devBypass.contains(uuid);

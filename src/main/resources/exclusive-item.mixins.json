@@ -17,7 +17,8 @@
 		"PotionItemMixin",
 		"SplashPotionItemMixin",
 		"LingeringPotionItemMixin",
-		"ClientPlayerEntityMixin_CastBlock"
+		"ClientPlayerEntityMixin_CastBlock",
+		"PlayerTrinketTickMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
