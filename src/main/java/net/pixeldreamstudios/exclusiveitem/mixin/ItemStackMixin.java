@@ -24,6 +24,7 @@ import java.util.List;
 
 @Mixin(ItemStack.class)
 public class ItemStackMixin {
+
 	@Inject(method = "inventoryTick", at = @At("HEAD"))
 	private void bindToPlayerOnTick(World world, Entity entity, int slot, boolean selected, CallbackInfo ci) {
 		ItemStack stack = (ItemStack)(Object)this;
@@ -34,15 +35,12 @@ public class ItemStackMixin {
 
 				ExclusiveItemUtil.bindToPlayer(stack, player);
 
-				// 🎇 PLAY BINDING EFFECT
-				world.playSound(null, player.getBlockPos(), SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.PLAYERS, 0.4f, 1.5f);
+				world.playSound(null, player.getBlockPos(), SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.PLAYERS, 0.4f, 0.75f);
 				world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
 
 				((ServerWorld) world).spawnParticles(ParticleTypes.ENCHANT,
 						player.getX(), player.getY() + 1, player.getZ(),
-						50, // amount
-						0.5, 0.5, 0.5, // offset
-						0.1); // speed
+						50, 0.5, 0.5, 0.5, 0.1);
 
 				((ServerWorld) world).spawnParticles(ParticleTypes.SOUL_FIRE_FLAME,
 						player.getX(), player.getY() + 1, player.getZ(),
@@ -53,7 +51,6 @@ public class ItemStackMixin {
 		}
 	}
 
-
 	@Inject(method = "getTooltip", at = @At("TAIL"))
 	private void addTooltip(Item.TooltipContext context, PlayerEntity player, TooltipType type, CallbackInfoReturnable<List<Text>> cir) {
 		ItemStack stack = (ItemStack)(Object)this;
@@ -62,8 +59,7 @@ public class ItemStackMixin {
 			List<Text> tooltip = cir.getReturnValue();
 
 			tooltip.add(Text.literal(""));
-			tooltip.add(Text.literal("⚔ Exclusive Item")
-					.formatted(Formatting.DARK_PURPLE, Formatting.BOLD));
+			tooltip.add(Text.literal("⚔ Exclusive Item").formatted(Formatting.DARK_PURPLE, Formatting.BOLD));
 
 			if (ExclusiveItemUtil.isOwned(stack)) {
 				tooltip.add(Text.literal("Bound to: ")
@@ -71,13 +67,17 @@ public class ItemStackMixin {
 								.formatted(Formatting.GOLD))
 						.formatted(Formatting.GRAY));
 			} else {
-				tooltip.add(Text.literal("Unbound")
-						.formatted(Formatting.RED, Formatting.ITALIC));
+				tooltip.add(Text.literal("Unbound").formatted(Formatting.RED, Formatting.ITALIC));
 			}
 
-			tooltip.add(Text.literal("Cannot be used by others.")
-					.formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+			String tag = ExclusiveItemUtil.getRequiredTag(stack);
+			if (tag != null && !tag.isEmpty() && ExclusiveItemUtil.shouldShowRequiredTag(stack)) {
+				tooltip.add(Text.literal("Requires Tag: " + tag)
+						.formatted(Formatting.DARK_AQUA, Formatting.ITALIC));
+			}
+
+
+			tooltip.add(Text.literal("Cannot be used by others.").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
 		}
 	}
-
 }
