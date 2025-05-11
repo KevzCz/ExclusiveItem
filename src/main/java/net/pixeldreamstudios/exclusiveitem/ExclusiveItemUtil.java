@@ -2,12 +2,12 @@ package net.pixeldreamstudios.exclusiveitem;
 
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -30,8 +30,27 @@ public class ExclusiveItemUtil {
         if (!nbt.contains("exclusiveOwner")) {
             nbt.putUuid("exclusiveOwner", player.getUuid());
             nbt.putString("exclusiveOwnerName", player.getName().getString());
-            stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
         }
+
+        // Generate and assign exclusiveID if not present
+        if (!nbt.contains("exclusiveID")) {
+            UUID exclusiveID = UUID.randomUUID();
+            nbt.putUuid("exclusiveID", exclusiveID);
+        }
+
+        stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+
+        if (player instanceof ServerPlayerEntity serverPlayer && isOwner(stack, player)) {
+            ExclusiveItemStorage.add(serverPlayer, stack);
+        }
+    }
+    @Nullable
+    public static UUID getExclusiveID(ItemStack stack) {
+        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+        if (component == null) return null;
+
+        NbtCompound nbt = component.copyNbt();
+        return nbt.containsUuid("exclusiveID") ? nbt.getUuid("exclusiveID") : null;
     }
 
     public static boolean isOwner(ItemStack stack, PlayerEntity player) {
@@ -49,16 +68,14 @@ public class ExclusiveItemUtil {
         // Check required tag, if set
         if (nbt.contains("requiredTag")) {
             String requiredTag = nbt.getString("requiredTag");
-            if (!player.getCommandTags().contains(requiredTag)) {
-                return false;
-            }
+            return player.getCommandTags().contains(requiredTag);
         }
 
         return true;
     }
     public static boolean shouldShowRequiredTag(ItemStack stack) {
         NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        if (component == null) return true; // default = true
+        if (component == null) return true;
         NbtCompound nbt = component.copyNbt();
         return !nbt.contains("showRequiredTag") || nbt.getBoolean("showRequiredTag");
     }

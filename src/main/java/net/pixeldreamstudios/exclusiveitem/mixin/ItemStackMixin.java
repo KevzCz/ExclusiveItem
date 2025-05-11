@@ -1,17 +1,22 @@
 package net.pixeldreamstudios.exclusiveitem.mixin;
 
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
+import net.pixeldreamstudios.exclusiveitem.ExclusiveItemStorage;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemCommands;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,6 +53,24 @@ public class ItemStackMixin {
 
 				player.sendMessage(Text.literal("§6⚔ The Item binds to your soul...").formatted(Formatting.GOLD), true);
 			}
+			if (ExclusiveItemUtil.isExclusiveItem(stack)) {
+				NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+				if (component != null) {
+					NbtCompound nbt = component.copyNbt();
+
+					// Assign exclusiveID if missing
+					if (!nbt.containsUuid("exclusiveID")) {
+						nbt.putUuid("exclusiveID", java.util.UUID.randomUUID());
+						stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+					}
+
+					// Store item if it has a valid exclusiveID
+					if (player instanceof ServerPlayerEntity serverPlayer) {
+						ExclusiveItemStorage.add(serverPlayer, stack);
+					}
+				}
+			}
+
 		}
 	}
 
@@ -80,4 +103,5 @@ public class ItemStackMixin {
 			tooltip.add(Text.literal("Cannot be used by others.").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
 		}
 	}
+
 }

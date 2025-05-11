@@ -1,8 +1,10 @@
 package net.pixeldreamstudios.exclusiveitem;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.ItemStackArgument;
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.component.DataComponentTypes;
@@ -12,11 +14,14 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -162,7 +167,119 @@ public class ExclusiveItemCommands {
                                 })
                         )
                 )
-        );
+                .then(CommandManager.literal("stored")
+                        .executes(ctx -> {
+                                ServerPlayerEntity player = ctx.getSource().getPlayer();
+                                if (player == null) return 0;
+
+                                List<ItemStack> stored = ExclusiveItemStorage.get(player);
+                                if (stored.isEmpty()) {
+                                    player.sendMessage(Text.literal("You have no stored exclusive items.")
+                                            .formatted(Formatting.YELLOW), false);
+                                    return 1;
+                                }
+
+                                player.sendMessage(Text.literal("=== Stored Exclusive Items ===").formatted(Formatting.GRAY), false);
+
+                                for (int i = 0; i < stored.size(); i++) {
+                                    ItemStack stack = stored.get(i);
+                                    Text line = Text.literal("[" + i + "] ")
+                                            .append(stack.getName().copy().formatted(Formatting.AQUA))
+                                            .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackContent(stack))));
+                                    player.sendMessage(line, false);
+                                }
+
+                                return 1;
+                            }
+                        )
+                )
+                .then(CommandManager.literal("overrideowner")
+                        .requires(source -> source.hasPermissionLevel(2)) // op only
+                        .then(CommandManager.argument("target", EntityArgumentType.player())
+                                .executes(ctx -> {
+                                    ServerPlayerEntity sender = ctx.getSource().getPlayerOrThrow();
+                                    ServerPlayerEntity newOwner = EntityArgumentType.getPlayer(ctx, "target");
+                                    ItemStack stack = sender.getMainHandStack();
+
+                                    if (stack.isEmpty()) {
+                                        sender.sendMessage(Text.literal("You must be holding an item to override.").formatted(Formatting.RED), false);
+                                        return 0;
+                                    }
+
+                                    NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+                                    NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
+
+                                    nbt.putBoolean("ExclusiveItem", true);
+                                    nbt.putUuid("exclusiveOwner", newOwner.getUuid());
+                                    nbt.putString("exclusiveOwnerName", newOwner.getName().getString());
+                                    stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+
+                                    // Optional: add it to the new owner's storage if they own it now
+                                    if (ExclusiveItemUtil.isOwner(stack, newOwner)) {
+                                        ExclusiveItemStorage.add(newOwner, stack);
+                                    }
+
+                                    sender.sendMessage(Text.literal("Exclusive item ownership overridden to ")
+                                            .append(Text.literal(newOwner.getName().getString()).formatted(Formatting.AQUA)), false);
+                                    return 1;
+                                })
+                        )
+                )
+                .then(CommandManager.literal("addall")
+                        .requires(source -> source.hasPermissionLevel(2))
+                        .executes(ctx -> {
+                            ServerPlayerEntity player = ctx.getSource().getPlayer();
+                            if (player == null) return 0;
+
+                            int updated = 0;
+
+                            for (int i = 0; i < player.getInventory().size(); i++) {
+                                ItemStack stack = player.getInventory().getStack(i);
+                                if (stack.isEmpty()) continue;
+
+                                NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+                                NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
+
+                                if (!nbt.getBoolean("ExclusiveItem")) {
+                                    nbt.putBoolean("ExclusiveItem", true);
+                                    stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+                                }
+
+                                ExclusiveItemUtil.bindToPlayer(stack, player);
+                                updated++;
+                            }
+
+                            player.sendMessage(Text.literal("Tagged " + updated + " item(s) in your inventory as exclusive.")
+                                    .formatted(Formatting.GREEN), false);
+                            return 1;
+                        })
+                )
+
+                .then(CommandManager.literal("givefromstorage")
+                        .then(CommandManager.argument("index", IntegerArgumentType.integer(0))
+                                .executes(ctx -> {
+                                    ServerPlayerEntity player = ctx.getSource().getPlayer();
+                                    if (player == null) return 0;
+
+                                    int index = IntegerArgumentType.getInteger(ctx, "index");
+                                    List<ItemStack> stored = ExclusiveItemStorage.get(player);
+
+                                    if (index < 0 || index >= stored.size()) {
+                                        player.sendMessage(Text.literal("Invalid index.").formatted(Formatting.RED), false);
+                                        return 1;
+                                    }
+
+                                    ItemStack copy = stored.get(index).copy();
+                                    player.getInventory().offerOrDrop(copy);
+
+                                    player.sendMessage(Text.literal("Given item from storage: ")
+                                            .append(copy.toHoverableText())
+                                            .formatted(Formatting.AQUA), false);
+                                    return 1;
+                                }))
+
+                ));
+
     }
 
     public static boolean isBypassing(ServerPlayerEntity player) {

@@ -18,6 +18,9 @@
 	"entrypoints": {
 		"main": [
 			"net.pixeldreamstudios.exclusiveitem.ExclusiveItemMod"
+		],
+		"client": [
+			"net.pixeldreamstudios.exclusiveitem.client.ExclusiveItemClient"
 		]
 	},
 	"mixins": [

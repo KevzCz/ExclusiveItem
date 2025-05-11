@@ -18,7 +18,8 @@
 		"SplashPotionItemMixin",
 		"LingeringPotionItemMixin",
 		"SpellHelperMixin",
-		"PlayerTrinketTickMixin"
+		"PlayerTrinketTickMixin",
+		"ServerPlayerEntityMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
