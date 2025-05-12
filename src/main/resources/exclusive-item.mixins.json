@@ -19,8 +19,10 @@
 		"LingeringPotionItemMixin",
 		"SpellHelperMixin",
 		"PlayerTrinketTickMixin",
-		"ServerPlayerEntityMixin"
+		"ServerPlayerEntityMixin",
+		"BookItemMixin"
 	],
+	"client": [],
 	"injectors": {
 		"defaultRequire": 1
 	}

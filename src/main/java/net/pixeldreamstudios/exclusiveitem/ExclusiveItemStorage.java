@@ -7,6 +7,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.pixeldreamstudios.exclusiveitem.item.ModItems;
 import net.pixeldreamstudios.exclusiveitem.network.SyncExclusiveItemsPayload;
 
 import java.util.*;
@@ -23,10 +24,17 @@ public class ExclusiveItemStorage {
         UUID newId = getExclusiveID(stack);
         if (newId == null) return;
 
+        if (stack.isOf(ModItems.BOOK_ITEM)) {
+            for (ItemStack existing : list) {
+                if (existing.isOf(ModItems.BOOK_ITEM)) {
+                    return;
+                }
+            }
+        }
         for (ItemStack existing : list) {
             UUID existingId = getExclusiveID(existing);
             if (newId.equals(existingId)) {
-                return; // Already stored
+                return;
             }
         }
         ItemStack copy = stack.copy();

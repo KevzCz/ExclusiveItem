@@ -40,7 +40,7 @@ public class ClientExclusiveItemStorage {
             if (!(element instanceof NbtCompound compound)) {
                  continue;
             }
-
+    
             ItemStack.CODEC.parse(ops, compound).result().ifPresentOrElse(
                     clientItems::add,
                     () -> System.err.println("[ExclusiveItem] Failed to parse item stack from NBT:\n" + compound)

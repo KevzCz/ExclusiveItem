@@ -58,13 +58,12 @@ public class ItemStackMixin {
 				if (component != null) {
 					NbtCompound nbt = component.copyNbt();
 
-					// Assign exclusiveID if missing
+
 					if (!nbt.containsUuid("exclusiveID")) {
 						nbt.putUuid("exclusiveID", java.util.UUID.randomUUID());
 						stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
 					}
 
-					// Store item if it has a valid exclusiveID
 					if (player instanceof ServerPlayerEntity serverPlayer) {
 						ExclusiveItemStorage.add(serverPlayer, stack);
 					}

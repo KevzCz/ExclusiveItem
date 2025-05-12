@@ -16,21 +16,37 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.pixeldreamstudios.exclusiveitem.config.ExclusiveItemConfig;
+import net.pixeldreamstudios.exclusiveitem.item.ModItems;
 import net.pixeldreamstudios.exclusiveitem.network.ClaimExclusiveItemPayload;
+import org.joml.Quaternionf;
 
 import java.util.List;
 
 public class ClaimConfirmationScreen extends Screen {
     private static final Identifier BG_TEXTURE = Identifier.of("exclusive-item", "textures/gui/background.png");
-
+    private boolean animating = false;
+    private long animationStart = 0L;
+    private static final Identifier CRACK1 = Identifier.of("exclusive-item", "textures/gui/crack1.png");
+    private static final Identifier CRACK2 = Identifier.of("exclusive-item", "textures/gui/crack2.png");
     private final ItemStack itemToClaim;
-    private final List<ItemStack> requiredItems = ExclusiveItemConfig.INSTANCE.getRequiredItemStacks();
-    private final int requiredXp = ExclusiveItemConfig.INSTANCE.requiredXpLevels;
+    private final List<ItemStack> requiredItems;
+    private final int requiredXp;
     private long startTime;
 
     public ClaimConfirmationScreen(ItemStack item) {
         super(Text.literal("✨ Confirm Claim ✨"));
         this.itemToClaim = item;
+
+
+        if (item.isOf(ModItems.BOOK_ITEM)) {
+            ItemStack book = new ItemStack(net.minecraft.item.Items.BOOK);
+            book.setCount(1);
+            this.requiredItems = List.of(book);
+            this.requiredXp = 10;
+        } else {
+            this.requiredItems = ExclusiveItemConfig.INSTANCE.getRequiredItemStacks();
+            this.requiredXp = ExclusiveItemConfig.INSTANCE.requiredXpLevels;
+        }
     }
 
     @Override
@@ -52,8 +68,6 @@ public class ClaimConfirmationScreen extends Screen {
         context.fill(0, 0, width, height, 0xAA000000);
         context.setShaderColor(1f, 1f, 1f, 1f);
         context.drawTexture(BG_TEXTURE, x, y, 0, 0, 324, 200, 324, 200);
-
-        // Glow border
         int thickness = 2;
         float glowAlpha = 0.45f + 0.15f * MathHelper.sin((System.currentTimeMillis() - startTime) / 200f);
         int glowOuter = applyAlpha(0xFF33CCFF, glowAlpha);
@@ -88,7 +102,7 @@ public class ClaimConfirmationScreen extends Screen {
             String countStr = required.getCount() > 1 ? "x" + required.getCount() : "";
             if (!countStr.isEmpty()) {
                 int countWidth = textRenderer.getWidth(countStr);
-                context.drawTextWithShadow(textRenderer, countStr, itemX + 8 - countWidth / 2, itemY - 12, 0xFFFFFF);
+                context.drawTextWithShadow(textRenderer, countStr, itemX + 8 - countWidth / 2, itemY - 6, 0xFFFFFF);
             }
 
             if (player != null && !player.getInventory().contains(required)) {
@@ -118,14 +132,9 @@ public class ClaimConfirmationScreen extends Screen {
 
         float time = (System.currentTimeMillis() - startTime) / 1000f;
         float bob = MathHelper.sin(time * 2f) * 2f;
-        MatrixStack matrices = context.getMatrices();
-        matrices.push();
-        matrices.translate(claimItemX + 8, claimItemY + 8 - bob, 150);
-        matrices.scale(1.75f, 1.75f, 1.75f);
-        context.drawItem(itemToClaim, -8, -8);
-        matrices.pop();
+        renderAnimatedClaimItem(context, claimItemX, claimItemY);
 
-        // Tooltips
+
         for (int i = 0; i < requiredItems.size(); i++) {
             if (hoveringItems[i]) {
                 context.drawItemTooltip(textRenderer, requiredItems.get(i), mouseX, mouseY);
@@ -135,7 +144,6 @@ public class ClaimConfirmationScreen extends Screen {
         if (hoveringClaim)
             context.drawItemTooltip(textRenderer, itemToClaim, mouseX, mouseY);
 
-        // Buttons
         int btnWidth = 80;
         int btnHeight = 20;
         int spacing = 20;
@@ -149,10 +157,30 @@ public class ClaimConfirmationScreen extends Screen {
         boolean hoverClaim = mouseX >= centerX + spacing && mouseX <= centerX + btnWidth + spacing &&
                 mouseY >= btnY && mouseY <= btnY + btnHeight;
 
-        boolean canClaim = hasItems && hasXp;
-        int claimBtnColor = canClaim
-                ? (hoverClaim ? 0xFF66BB66 : 0xFF449944)
-                : 0xFF555555;
+        boolean canClaim = hasXp;
+
+        for (ItemStack req : requiredItems) {
+            int found = 0;
+            for (ItemStack stack : player.getInventory().main) {
+                if (ItemStack.areItemsAndComponentsEqual(stack, req)) {
+                    found += stack.getCount();
+                }
+            }
+            if (found < req.getCount()) {
+                canClaim = false;
+                break;
+            }
+        }
+
+        int claimBtnColor;
+        if (animating) {
+            claimBtnColor = 0xFF333333; // darker gray when disabled
+        } else if (canClaim) {
+            claimBtnColor = hoverClaim ? 0xFF66BB66 : 0xFF449944;
+        } else {
+            claimBtnColor = 0xFF555555;
+        }
+
 
         context.fill(centerX + spacing, btnY, centerX + btnWidth + spacing, btnY + btnHeight, claimBtnColor);
         context.drawCenteredTextWithShadow(textRenderer, canClaim ? "§aClaim" : "§7Claim", centerX + btnWidth / 2 + spacing, btnY + 6, 0xFFFFFF);
@@ -161,25 +189,22 @@ public class ClaimConfirmationScreen extends Screen {
             List<Text> tooltip = new java.util.ArrayList<>();
             tooltip.add(Text.literal("§cMissing Requirements:"));
 
-            // XP check
-            int requiredXp = ExclusiveItemConfig.INSTANCE.requiredXpLevels;
-            int currentXp = MinecraftClient.getInstance().player != null ? MinecraftClient.getInstance().player.experienceLevel : 0;
+            int currentXp = player != null ? player.experienceLevel : 0;
             if (currentXp < requiredXp) {
                 tooltip.add(Text.literal(" - §b" + requiredXp + " XP§r (You have " + currentXp + ")"));
             }
 
-            // Items check
-            if (MinecraftClient.getInstance().player != null) {
-                for (ItemStack required : ExclusiveItemConfig.INSTANCE.getRequiredItemStacks()) {
+            if (player != null) {
+                for (ItemStack required : requiredItems) {
                     int found = 0;
-                    for (ItemStack stack : MinecraftClient.getInstance().player.getInventory().main) {
+                    for (ItemStack stack : player.getInventory().main) {
                         if (ItemStack.areItemsAndComponentsEqual(stack, required)) {
                             found += stack.getCount();
                         }
                     }
                     if (found < required.getCount()) {
-                        tooltip.add(Text.literal(" - §b" + required.getCount() + "x " + required.getName().getString() +
-                                "§r (You have " + found + ")"));
+                        tooltip.add(Text.literal(" - §b" + required.getCount() + "x " + required.getName().getString()
+                                + "§r (You have " + found + ")"));
                     }
                 }
             }
@@ -187,8 +212,94 @@ public class ClaimConfirmationScreen extends Screen {
             context.drawTooltip(textRenderer, tooltip, mouseX, mouseY);
         }
 
-    }
+        if (animating) {
+            long elapsed = System.currentTimeMillis() - animationStart;
 
+            if (elapsed >= 4000) {
+                // Give item and close screen, but prevent flicker by returning immediately
+                DynamicRegistryManager registryManager = MinecraftClient.getInstance().getNetworkHandler().getRegistryManager();
+                RegistryOps<NbtElement> ops = RegistryOps.of(NbtOps.INSTANCE, registryManager);
+
+                ItemStack oneCopy = itemToClaim.copy();
+                NbtElement encoded = ItemStack.CODEC.encodeStart(ops, oneCopy).result().orElse(null);
+
+                if (encoded instanceof NbtCompound itemNbt) {
+                    ClientPlayNetworking.send(new ClaimExclusiveItemPayload(itemNbt));
+                }
+                if (MinecraftClient.getInstance().player != null) {
+                    var client = MinecraftClient.getInstance();
+                    player = client.player;
+                    var world = client.world;
+
+                    // Play magical sounds
+                    player.playSound(SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, 1.0f, 1.0f);
+                    player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.5f);
+                    player.playSound(SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE, 0.7f, 0.8f);
+
+                    // Spawn ENCHANT particles around the player
+                    var rand = player.getRandom();
+                    for (int i = 0; i < 20; i++) {
+                        double offsetX = (rand.nextDouble() - 0.5) * 1.5;
+                        double offsetY = rand.nextDouble() * 1.0 + 1.0;
+                        double offsetZ = (rand.nextDouble() - 0.5) * 1.5;
+
+                        world.addParticle(
+                                net.minecraft.particle.ParticleTypes.ENCHANT,
+                                player.getX() + offsetX,
+                                player.getY() + offsetY,
+                                player.getZ() + offsetZ,
+                                0.0, 0.05, 0.0
+                        );
+                    }
+                }
+
+
+                MinecraftClient.getInstance().setScreen(null);
+
+            }
+        }
+
+
+    }
+    private void renderAnimatedClaimItem(DrawContext context, int centerX, int centerY) {
+        MatrixStack matrices = context.getMatrices();
+        long elapsed = System.currentTimeMillis() - animationStart;
+
+        float bob = MathHelper.sin((System.currentTimeMillis() - startTime) / 500f) * 2f;
+        float scale = 1.75f;
+        float spiralX = 0f;
+        float spiralY = -bob;
+        float angleRad = 0f;
+
+        // Determine phase
+        if (animating) {
+            if (elapsed < 1000) {
+                // Crack1 phase
+                context.drawTexture(CRACK1, centerX - 8, centerY - 8, 0, 0, 32, 32, 32, 32);
+            } else if (elapsed < 2000) {
+                // Crack2 phase
+                context.drawTexture(CRACK2, centerX - 8, centerY - 8, 0, 0, 32, 32, 32, 32);
+            } else {
+                context.drawTexture(CRACK2, centerX - 8, centerY - 8, 0, 0, 32, 32, 32, 32);
+                float t = MathHelper.clamp((elapsed - 2000f) / 2000f, 0f, 1f);
+
+                float spiralRadius = MathHelper.lerp(t, 40f, 0f);
+                float angleDegrees = 720f * t;
+                angleRad = (float) Math.toRadians(angleDegrees);
+                spiralX = spiralRadius * MathHelper.cos(angleRad);
+                spiralY = spiralRadius * MathHelper.sin(angleRad) - bob;
+                scale = MathHelper.lerp(t, 1.75f, 0.05f);
+            }
+        }
+        matrices.push();
+        matrices.translate(centerX + spiralX, centerY + spiralY, 150);
+        matrices.translate(8, 8, 0);
+        matrices.scale(scale, scale, scale);
+        matrices.multiply(new Quaternionf().rotateZ(angleRad));
+        context.drawItem(itemToClaim, -8, -8);
+        matrices.pop();
+
+    }
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int centerX = width / 2;
@@ -199,23 +310,30 @@ public class ClaimConfirmationScreen extends Screen {
 
         if (mouseX >= centerX - btnWidth - spacing && mouseX <= centerX - spacing &&
                 mouseY >= btnY && mouseY <= btnY + btnHeight) {
-            MinecraftClient.getInstance().setScreen(new ReclaimScreen());
+            MinecraftClient.getInstance().setScreen(new ReclaimScreen(false));
             return true;
         }
 
-        if (mouseX >= centerX + spacing && mouseX <= centerX + btnWidth + spacing &&
+        if (!animating && mouseX >= centerX + spacing && mouseX <= centerX + btnWidth + spacing &&
                 mouseY >= btnY && mouseY <= btnY + btnHeight) {
+
 
             var player = MinecraftClient.getInstance().player;
             if (player == null) return true;
 
-            // Validate XP
+
             if (player.experienceLevel < requiredXp) return true;
 
-            // Validate required items
             for (ItemStack req : requiredItems) {
-                if (!player.getInventory().contains(req)) return true;
+                int found = 0;
+                for (ItemStack stack : player.getInventory().main) {
+                    if (ItemStack.areItemsAndComponentsEqual(stack, req)) {
+                        found += stack.getCount();
+                    }
+                }
+                if (found < req.getCount()) return true;
             }
+
 
             DynamicRegistryManager registryManager = MinecraftClient.getInstance().getNetworkHandler().getRegistryManager();
             RegistryOps<NbtElement> ops = RegistryOps.of(NbtOps.INSTANCE, registryManager);
@@ -228,9 +346,11 @@ public class ClaimConfirmationScreen extends Screen {
                 return true;
             }
 
-            ClientPlayNetworking.send(new ClaimExclusiveItemPayload(itemNbt));
-            MinecraftClient.getInstance().setScreen(null);
+            player.playSound(SoundEvents.BLOCK_GLASS_BREAK, 1.0f, 1.0f); // crack sound
+            this.animating = true;
+            this.animationStart = System.currentTimeMillis();
             return true;
+
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
@@ -245,4 +365,5 @@ public class ClaimConfirmationScreen extends Screen {
     public boolean shouldPause() {
         return false;
     }
+
 }

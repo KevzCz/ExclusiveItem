@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "exclusive-item",
 	"version": "${version}",
-	"name": "Exclusive Weapon",
+	"name": "Exclusive Item",
 	"description": "Adds a tag that bounds a player to that item!",
 	"authors": [
 		"KevzCz",

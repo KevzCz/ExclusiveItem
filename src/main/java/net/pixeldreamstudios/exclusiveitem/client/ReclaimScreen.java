@@ -44,8 +44,20 @@ public class ReclaimScreen extends Screen {
     private final float[] itemVY = new float[12];
     private final float[] itemVX = new float[12];
 
+    private static final int TILE_SIZE =16;
+    private static final int FADE_DURATION = 500;
+    private static final int STAGGER_RANGE = 800;
+    private static final int FADE_GRID_COLS = (int) Math.ceil(TEXTURE_WIDTH / (float) TILE_SIZE);
+    private static final int FADE_GRID_ROWS = (int) Math.ceil(TEXTURE_HEIGHT / (float) TILE_SIZE);
+    private long[][] tileRevealTime = new long[FADE_GRID_ROWS][FADE_GRID_COLS];
+    private boolean doIntroAnimation = true;
     public ReclaimScreen() {
+        this(true);
+    }
+
+    public ReclaimScreen(boolean doIntroAnimation) {
         super(Text.literal("Reclaim Exclusive Items"));
+        this.doIntroAnimation = doIntroAnimation;
     }
 
     @Override
@@ -63,7 +75,9 @@ public class ReclaimScreen extends Screen {
         context.setShaderColor(1f, 1f, 1f, 0.95f);
         context.drawTexture(BG_TEXTURE, x, y, 0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
         context.setShaderColor(1f, 1f, 1f, 1f);
-
+        if (doIntroAnimation) {
+            renderIntroTileFade(context, x, y);
+        }
         int thickness = 2;
         int glowOuter = applyAlpha(0xFF33CCFF, glowAlpha);
         int glowInner = applyAlpha(0xFF225577, glowAlpha);
@@ -248,6 +262,44 @@ public class ReclaimScreen extends Screen {
             );
         }
     }
+    private void renderIntroTileFade(DrawContext context, int x, int y) {
+        long elapsed = System.currentTimeMillis() - startTime;
+
+        for (int row = 0; row < FADE_GRID_ROWS; row++) {
+            for (int col = 0; col < FADE_GRID_COLS; col++) {
+                int tileLeft   = x + col * TILE_SIZE;
+                int tileTop    = y + row * TILE_SIZE;
+                int tileRight  = Math.min(tileLeft + TILE_SIZE, x + TEXTURE_WIDTH);
+                int tileBottom = Math.min(tileTop + TILE_SIZE, y + TEXTURE_HEIGHT);
+
+                if (tileRevealTime[row][col] == 0L) {
+                    float verticalBias = (FADE_GRID_ROWS - row) / (float) FADE_GRID_ROWS;
+                    int delay = (int) (Math.random() * STAGGER_RANGE * verticalBias);
+                    tileRevealTime[row][col] = startTime + delay;
+                }
+
+                long tileStart = tileRevealTime[row][col];
+                long tileElapsed = elapsed - (tileStart - startTime);
+
+                int color;
+
+                if (tileElapsed < 0) {
+
+                    color = 0xFF000000;
+                } else if (tileElapsed < FADE_DURATION) {
+
+                    float alpha = 1.0f - (tileElapsed / (float) FADE_DURATION);
+                    int a = (int) (alpha * 255) & 0xFF;
+                    color = (a << 24);
+                } else {
+                    continue;
+                }
+
+                context.fill(tileLeft, tileTop, tileRight, tileBottom, color);
+            }
+        }
+    }
+
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
