@@ -2,6 +2,7 @@ package net.pixeldreamstudios.exclusiveitem;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
@@ -18,7 +19,7 @@ public class ExclusiveItemStorage {
     private static final Map<UUID, List<ItemStack>> storage = new HashMap<>();
 
     public static void add(ServerPlayerEntity player, ItemStack stack) {
-        if (!ExclusiveItemUtil.isOwner(stack, player)) return; // 💥 Ownership check
+        if (!ExclusiveItemUtil.isOwner(stack, player)) return;
 
         List<ItemStack> list = storage.computeIfAbsent(player.getUuid(), k -> new ArrayList<>());
         UUID newId = getExclusiveID(stack);
@@ -43,19 +44,17 @@ public class ExclusiveItemStorage {
     }
     public static void syncToClient(ServerPlayerEntity player) {
         List<ItemStack> stored = ExclusiveItemStorage.get(player);
-        RegistryWrapper.WrapperLookup registryLookup = player.getRegistryManager();
-
         NbtList list = new NbtList();
         for (ItemStack stack : stored) {
-            ItemStack.CODEC.encodeStart(registryLookup.getOps(NbtOps.INSTANCE), stack)
-                    .result()
-                    .ifPresent(nbtElement -> list.add((NbtCompound) nbtElement));
+            NbtElement encoded = stack.encode(player.getRegistryManager());
+            if (encoded instanceof NbtCompound compound) {
+                list.add(compound);
+            }
         }
-
         NbtCompound compound = new NbtCompound();
         compound.put("ExclusiveItemStorage", list);
-
         player.networkHandler.sendPacket(new CustomPayloadS2CPacket(new SyncExclusiveItemsPayload(compound)));
+
     }
 
 
@@ -68,32 +67,37 @@ public class ExclusiveItemStorage {
     }
 
     public static void loadFromNbt(ServerPlayerEntity player, NbtCompound nbt) {
-        if (!nbt.contains("ExclusiveItemStorage", NbtList.COMPOUND_TYPE)) return;
+        if (!nbt.contains("ExclusiveItemStorage", NbtElement.LIST_TYPE)) return;
 
-        RegistryWrapper.WrapperLookup registryLookup = player.getRegistryManager();
-        NbtList list = nbt.getList("ExclusiveItemStorage", NbtList.COMPOUND_TYPE);
+        RegistryWrapper.WrapperLookup registries = player.getRegistryManager();
+        NbtList list = nbt.getList("ExclusiveItemStorage", NbtElement.COMPOUND_TYPE);
         List<ItemStack> stacks = new ArrayList<>();
 
         for (int i = 0; i < list.size(); i++) {
             NbtCompound stackNbt = list.getCompound(i);
-            ItemStack.CODEC.parse(registryLookup.getOps(NbtOps.INSTANCE), stackNbt).result().ifPresent(stacks::add);
+            ItemStack.fromNbt(registries, stackNbt).ifPresent(stacks::add);
         }
 
         set(player, stacks);
     }
 
+
+
     public static void saveToNbt(ServerPlayerEntity player, NbtCompound nbt) {
         List<ItemStack> stacks = get(player);
-        RegistryWrapper.WrapperLookup registryLookup = player.getRegistryManager();
-
+        RegistryWrapper.WrapperLookup registries = player.getRegistryManager();
         NbtList list = new NbtList();
+
         for (ItemStack stack : stacks) {
-            ItemStack.CODEC.encodeStart(registryLookup.getOps(NbtOps.INSTANCE), stack)
-                    .result()
-                    .ifPresent(nbtElement -> list.add((NbtCompound) nbtElement));
+            NbtElement encoded = stack.encode(registries);
+            if (encoded instanceof NbtCompound compound) {
+                list.add(compound);
+            }
         }
 
         nbt.put("ExclusiveItemStorage", list);
     }
+
+
 
 }

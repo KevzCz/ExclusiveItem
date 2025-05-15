@@ -15,6 +15,7 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.HoverEvent;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -181,20 +182,29 @@ public class ExclusiveItemCommands {
 
                                 player.sendMessage(Text.literal("=== Stored Exclusive Items ===").formatted(Formatting.GRAY), false);
 
-                                for (int i = 0; i < stored.size(); i++) {
-                                    ItemStack stack = stored.get(i);
-                                    Text line = Text.literal("[" + i + "] ")
-                                            .append(stack.getName().copy().formatted(Formatting.AQUA))
-                                            .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackContent(stack))));
-                                    player.sendMessage(line, false);
+                            for (int i = 0; i < stored.size(); i++) {
+                                ItemStack stack = stored.get(i);
+                                Text line = Text.literal("[" + i + "] ")
+                                        .append(stack.getName().copy().formatted(Formatting.AQUA));
+
+                                try {
+                                    line = ((MutableText) line).setStyle(Style.EMPTY.withHoverEvent(
+                                            new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackContent(stack))
+                                    ));
+                                } catch (Exception e) {
+                                    ExclusiveItemMod.LOGGER.warn("Failed to create hover for stack [{}]: {}", i, stack, e);
                                 }
+
+                                player.sendMessage(line, false);
+                            }
+
 
                                 return 1;
                             }
                         )
                 )
                 .then(CommandManager.literal("overrideowner")
-                        .requires(source -> source.hasPermissionLevel(2)) // op only
+                        .requires(source -> source.hasPermissionLevel(2))
                         .then(CommandManager.argument("target", EntityArgumentType.player())
                                 .executes(ctx -> {
                                     ServerPlayerEntity sender = ctx.getSource().getPlayerOrThrow();
@@ -214,7 +224,6 @@ public class ExclusiveItemCommands {
                                     nbt.putString("exclusiveOwnerName", newOwner.getName().getString());
                                     stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
 
-                                    // Optional: add it to the new owner's storage if they own it now
                                     if (ExclusiveItemUtil.isOwner(stack, newOwner)) {
                                         ExclusiveItemStorage.add(newOwner, stack);
                                     }
