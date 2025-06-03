@@ -16,6 +16,7 @@ import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
 import net.pixeldreamstudios.exclusiveitem.config.ExclusiveItemConfig;
 import net.pixeldreamstudios.exclusiveitem.item.ModItems;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ServerNetwork {

@@ -173,8 +173,11 @@ public class ExclusiveItemCommands {
                                 ServerPlayerEntity player = ctx.getSource().getPlayer();
                                 if (player == null) return 0;
 
-                                List<ItemStack> stored = ExclusiveItemStorage.get(player);
-                                if (stored.isEmpty()) {
+                            List<ItemStack> stored = ExclusiveItemWorldStorage
+                                    .get(player.getServerWorld())
+                                    .getStacks(player.getRegistryManager(), player.getUuid());
+
+                            if (stored.isEmpty()) {
                                     player.sendMessage(Text.literal("You have no stored exclusive items.")
                                             .formatted(Formatting.YELLOW), false);
                                     return 1;
@@ -271,7 +274,10 @@ public class ExclusiveItemCommands {
                                     if (player == null) return 0;
 
                                     int index = IntegerArgumentType.getInteger(ctx, "index");
-                                    List<ItemStack> stored = ExclusiveItemStorage.get(player);
+                                    List<ItemStack> stored = ExclusiveItemWorldStorage
+                                            .get(player.getServerWorld())
+                                            .getStacks(player.getRegistryManager(), player.getUuid());
+
 
                                     if (index < 0 || index >= stored.size()) {
                                         player.sendMessage(Text.literal("Invalid index.").formatted(Formatting.RED), false);

@@ -19,7 +19,6 @@
 		"LingeringPotionItemMixin",
 		"SpellHelperMixin",
 		"PlayerTrinketTickMixin",
-		"ServerPlayerEntityMixin",
 		"BookItemMixin"
 	],
 	"client": [],

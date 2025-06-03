@@ -16,8 +16,6 @@ public class ExclusiveItemMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Exclusive Item mod initialized.");
-
-		// Load config
 		ExclusiveItemConfig.INSTANCE.load();
 		ModItems.registerItems();
 		ModItemGroups.registerItemGroups();
@@ -25,5 +23,6 @@ public class ExclusiveItemMod implements ModInitializer {
 			ExclusiveItemCommands.register(dispatcher, registryAccess);
 		});
 		ServerNetwork.register();
+		CooldownHandler.register();
 	}
 }

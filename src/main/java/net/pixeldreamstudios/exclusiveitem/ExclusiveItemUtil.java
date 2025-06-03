@@ -32,7 +32,7 @@ public class ExclusiveItemUtil {
             nbt.putString("exclusiveOwnerName", player.getName().getString());
         }
 
-        // Generate and assign exclusiveID if not present
+
         if (!nbt.contains("exclusiveID")) {
             UUID exclusiveID = UUID.randomUUID();
             nbt.putUuid("exclusiveID", exclusiveID);
@@ -65,7 +65,7 @@ public class ExclusiveItemUtil {
             return false;
         }
 
-        // Check required tag, if set
+
         if (nbt.contains("requiredTag")) {
             String requiredTag = nbt.getString("requiredTag");
             return player.getCommandTags().contains(requiredTag);
@@ -103,7 +103,7 @@ public class ExclusiveItemUtil {
         UUID fakeOwnerUUID = UUID.nameUUIDFromBytes("SomebodyElse".getBytes());
         nbt.putUuid("exclusiveOwner", fakeOwnerUUID);
         nbt.putString("exclusiveOwnerName", "SomebodyElse");
-        nbt.putString("requiredTag", "TagRequirement"); // Optional tag requirement
+        nbt.putString("requiredTag", "TagRequirement");
 
         stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
 
