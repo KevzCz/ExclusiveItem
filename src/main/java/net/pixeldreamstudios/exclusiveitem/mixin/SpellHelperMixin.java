@@ -31,7 +31,11 @@ public class SpellHelperMixin {
         ItemStack stack = player.getMainHandStack();
 
         if (ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(Text.literal("§cYou are not eligible to cast spells with this item."), true);
+            player.sendMessage(
+                    Text.translatable("exclusiveitem.message.not_eligible_spell")
+                            .formatted(Formatting.RED),
+                    true
+            );
             ci.cancel(); // Prevents the spell from being performed
         }
     }

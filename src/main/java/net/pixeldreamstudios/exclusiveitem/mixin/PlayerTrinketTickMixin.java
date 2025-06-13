@@ -37,8 +37,11 @@ public class PlayerTrinketTickMixin {
                         ExclusiveItemUtil.isExclusiveItem(stack) &&
                         !ExclusiveItemUtil.isOwner(stack, player)) {
 
-                    player.sendMessage(Text.literal("The trinket rejects you!").formatted(Formatting.RED), true);
-
+                    player.sendMessage(
+                            Text.translatable("exclusiveitem.message.trinket_reject")
+                                    .formatted(Formatting.RED),
+                            true
+                    );
                     if (!player.getInventory().insertStack(stack)) {
                         player.dropItem(stack, true); // Drop if inventory full
                     }

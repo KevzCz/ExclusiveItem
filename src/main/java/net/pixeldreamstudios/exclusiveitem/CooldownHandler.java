@@ -33,7 +33,6 @@ public class CooldownHandler {
                         playerCooldowns.put(itemId, ticksLeft - 1);
                     }
                 } else {
-                    // Clean up all cooldowns for that player if not holding an exclusive item
                     cooldownTimers.remove(player.getUuid());
                 }
             }

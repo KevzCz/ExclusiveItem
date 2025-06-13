@@ -27,8 +27,11 @@ public class PlayerArmorTickMixin {
                         ExclusiveItemUtil.isExclusiveItem(stack) &&
                         !ExclusiveItemUtil.isOwner(stack, player)) {
 
-                    player.sendMessage(Text.literal("The armor rejects you!").formatted(Formatting.RED), true);
-
+                    player.sendMessage(
+                            Text.translatable("exclusiveitem.message.armor_reject")
+                                    .formatted(Formatting.RED),
+                            true
+                    );
                     if (!player.getInventory().insertStack(stack)) {
                         player.dropItem(stack, true);
                     }

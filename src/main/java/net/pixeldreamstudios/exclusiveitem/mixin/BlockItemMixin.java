@@ -24,7 +24,11 @@ public class BlockItemMixin {
         ItemStack stack = context.getStack();
 
         if (ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(Text.literal("You can't place this block.").formatted(Formatting.RED), true);
+            player.sendMessage(
+                    Text.translatable("exclusiveitem.message.place_block_denied")
+                            .formatted(Formatting.RED),
+                    true
+            );
             cir.setReturnValue(ActionResult.FAIL);
         }
     }

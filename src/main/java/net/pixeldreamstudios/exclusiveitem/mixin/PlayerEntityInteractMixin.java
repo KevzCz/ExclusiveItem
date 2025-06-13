@@ -5,6 +5,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +28,11 @@ public class PlayerEntityInteractMixin {
         if (!player.getWorld().isClient &&
                 ExclusiveItemUtil.isExclusiveItem(stack) &&
                 !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(Text.literal("This item is exclusive to someone else.").formatted(net.minecraft.util.Formatting.RED), true);
+            player.sendMessage(
+                    Text.translatable("exclusiveitem.message.interact_denied")
+                            .formatted(Formatting.RED),
+                    true
+            );
             cir.setReturnValue(ActionResult.FAIL);
         }
     }

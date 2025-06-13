@@ -6,6 +6,7 @@ import net.minecraft.item.WrittenBookItem;
 import net.minecraft.item.WritableBookItem;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
@@ -21,7 +22,11 @@ public class BookItemMixin {
     private void preventUseIfNotOwner(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         ItemStack stack = user.getStackInHand(hand);
         if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, user)) {
-            user.sendMessage(Text.literal("§c§lThis book does not recognize you."), true);
+            user.sendMessage(
+                    Text.translatable("exclusiveitem.message.book_not_owner")
+                            .formatted(Formatting.RED, Formatting.BOLD),
+                    true
+            );
             cir.setReturnValue(ActionResult.FAIL);
         }
     }

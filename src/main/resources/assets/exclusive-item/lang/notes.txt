@@ -1,0 +1,2 @@
+Most translations are not needed as they are there to stop specific actions from occurring.
+If something were to bypass item cooldowns, it would show those messages.

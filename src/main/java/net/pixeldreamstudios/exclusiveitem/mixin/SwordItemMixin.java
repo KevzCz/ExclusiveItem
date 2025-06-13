@@ -22,7 +22,11 @@ public class SwordItemMixin {
     private void restrictAttack(ItemStack stack, LivingEntity target, LivingEntity attacker, CallbackInfoReturnable<Boolean> cir) {
         if (attacker instanceof PlayerEntity player && !player.getWorld().isClient &&
                 ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(Text.literal("You can't use this item!").formatted(Formatting.RED), true);
+            player.sendMessage(
+                    Text.translatable("exclusiveitem.message.attack_denied")
+                            .formatted(Formatting.RED),
+                    true
+            );
             cir.setReturnValue(false);
         }
     }
@@ -31,7 +35,11 @@ public class SwordItemMixin {
         ItemStack stack = miner.getMainHandStack();
 
         if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, miner)) {
-            miner.sendMessage(Text.literal("You can't mine with this item!").formatted(Formatting.RED), true);
+            miner.sendMessage(
+                    Text.translatable("exclusiveitem.message.mine_with_tool_denied")
+                            .formatted(Formatting.RED),
+                    true
+            );
             cir.setReturnValue(false);
         }
     }

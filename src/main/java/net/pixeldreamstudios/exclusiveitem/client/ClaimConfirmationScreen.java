@@ -34,7 +34,7 @@ public class ClaimConfirmationScreen extends Screen {
     private long startTime;
 
     public ClaimConfirmationScreen(ItemStack item) {
-        super(Text.literal("✨ Confirm Claim ✨"));
+        super(Text.translatable("exclusiveitem.gui.confirm_title"));
         this.itemToClaim = item;
 
 
@@ -77,9 +77,12 @@ public class ClaimConfirmationScreen extends Screen {
         context.fillGradient(x - thickness, y, x, y + 200, glowOuter, glowInner);
         context.fillGradient(x + 324, y, x + 324 + thickness, y + 200, glowInner, glowOuter);
 
-        context.drawCenteredTextWithShadow(textRenderer, "§b✨ Claim Item ✨", centerX, y + 10, 0xFFFFFF);
-        context.drawCenteredTextWithShadow(textRenderer, "Requirements:", centerX, y + 40, 0xAAAAAA);
-
+        context.drawCenteredTextWithShadow(textRenderer,
+                Text.translatable("exclusiveitem.gui.claim_header"),
+                centerX, y + 10, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer,
+                Text.translatable("exclusiveitem.gui.requirements"),
+                centerX, y + 40, 0xAAAAAA);
         int startX = centerX - (requiredItems.size() * 20) / 2;
         int itemY = y + 60;
 
@@ -112,16 +115,23 @@ public class ClaimConfirmationScreen extends Screen {
 
         if (requiredXp > 0 && player != null) {
             int xpY = itemY + 22;
-            String xpText = "XP Levels: " + player.experienceLevel + " / " + requiredXp;
-            int color = player.experienceLevel >= requiredXp ? 0x55FF55 : 0xFF5555;
-            context.drawCenteredTextWithShadow(textRenderer, xpText, centerX, xpY, color);
 
+            int color = player.experienceLevel >= requiredXp ? 0x55FF55 : 0xFF5555;
+            context.drawCenteredTextWithShadow(textRenderer,
+                    Text.translatable(
+                            "exclusiveitem.gui.xp_status",
+                            player.experienceLevel,
+                            requiredXp
+                    ),
+                    centerX, xpY, color);
             if (player.experienceLevel < requiredXp) {
                 hasXp = false;
             }
         }
 
-        context.drawCenteredTextWithShadow(textRenderer, "Item to Claim:", centerX, y + 110, 0xAAAAAA);
+        context.drawCenteredTextWithShadow(textRenderer,
+                Text.translatable("exclusiveitem.gui.item_to_claim"),
+                centerX, y + 110, 0xAAAAAA);
         int claimItemX = centerX - 8;
         int claimItemY = y + 130;
         boolean hoveringClaim = mouseX >= claimItemX && mouseX <= claimItemX + 16 &&
@@ -152,7 +162,7 @@ public class ClaimConfirmationScreen extends Screen {
         boolean hoverCancel = mouseX >= centerX - btnWidth - spacing && mouseX <= centerX - spacing &&
                 mouseY >= btnY && mouseY <= btnY + btnHeight;
         context.fill(centerX - btnWidth - spacing, btnY, centerX - spacing, btnY + btnHeight, hoverCancel ? 0xFF666666 : 0xFF444444);
-        context.drawCenteredTextWithShadow(textRenderer, "Cancel", centerX - btnWidth / 2 - spacing, btnY + 6, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer,  Text.translatable("exclusiveitem.gui.button_cancel"), centerX - btnWidth / 2 - spacing, btnY + 6, 0xFFFFFF);
 
         boolean hoverClaim = mouseX >= centerX + spacing && mouseX <= centerX + btnWidth + spacing &&
                 mouseY >= btnY && mouseY <= btnY + btnHeight;
@@ -183,15 +193,22 @@ public class ClaimConfirmationScreen extends Screen {
 
 
         context.fill(centerX + spacing, btnY, centerX + btnWidth + spacing, btnY + btnHeight, claimBtnColor);
-        context.drawCenteredTextWithShadow(textRenderer, canClaim ? "§aClaim" : "§7Claim", centerX + btnWidth / 2 + spacing, btnY + 6, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, Text.translatable(
+                canClaim
+                        ? "exclusiveitem.gui.button_claim"
+                        : "exclusiveitem.gui.button_claim_disabled"
+        ), centerX + btnWidth / 2 + spacing, btnY + 6, 0xFFFFFF);
 
         if (hoverClaim && !canClaim) {
             List<Text> tooltip = new java.util.ArrayList<>();
-            tooltip.add(Text.literal("§cMissing Requirements:"));
+            tooltip.add(Text.translatable("exclusiveitem.gui.tooltip_missing"));
 
             int currentXp = player != null ? player.experienceLevel : 0;
             if (currentXp < requiredXp) {
-                tooltip.add(Text.literal(" - §b" + requiredXp + " XP§r (You have " + currentXp + ")"));
+                tooltip.add(Text.translatable(
+                        "exclusiveitem.gui.tooltip_xp_line",
+                        requiredXp, currentXp
+                ));
             }
 
             if (player != null) {
@@ -203,8 +220,12 @@ public class ClaimConfirmationScreen extends Screen {
                         }
                     }
                     if (found < required.getCount()) {
-                        tooltip.add(Text.literal(" - §b" + required.getCount() + "x " + required.getName().getString()
-                                + "§r (You have " + found + ")"));
+                        tooltip.add(Text.translatable(
+                                "exclusiveitem.gui.tooltip_item_line",
+                                required.getCount(),
+                                required.getName().getString(),
+                                found
+                        ));
                     }
                 }
             }
@@ -216,7 +237,6 @@ public class ClaimConfirmationScreen extends Screen {
             long elapsed = System.currentTimeMillis() - animationStart;
 
             if (elapsed >= 4000) {
-                // Give item and close screen, but prevent flicker by returning immediately
                 DynamicRegistryManager registryManager = MinecraftClient.getInstance().getNetworkHandler().getRegistryManager();
                 RegistryOps<NbtElement> ops = RegistryOps.of(NbtOps.INSTANCE, registryManager);
 

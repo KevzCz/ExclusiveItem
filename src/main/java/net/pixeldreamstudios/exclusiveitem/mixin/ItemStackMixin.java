@@ -51,7 +51,11 @@ public class ItemStackMixin {
 						player.getX(), player.getY() + 1, player.getZ(),
 						20, 0.3, 0.3, 0.3, 0.01);
 
-				player.sendMessage(Text.literal("§6⚔ The Item binds to your soul...").formatted(Formatting.GOLD), true);
+				player.sendMessage(
+						Text.translatable("exclusiveitem.message.bind_soul")
+								.formatted(Formatting.RED),
+						true
+				);
 			}
 			if (ExclusiveItemUtil.isExclusiveItem(stack)) {
 				NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
@@ -81,25 +85,37 @@ public class ItemStackMixin {
 			List<Text> tooltip = cir.getReturnValue();
 
 			tooltip.add(Text.literal(""));
-			tooltip.add(Text.literal("⚔ Exclusive Item").formatted(Formatting.DARK_PURPLE, Formatting.BOLD));
-
+			tooltip.add(
+					Text.translatable("exclusiveitem.tooltip.exclusive_item")
+							.formatted(Formatting.DARK_PURPLE, Formatting.BOLD)
+			);
 			if (ExclusiveItemUtil.isOwned(stack)) {
-				tooltip.add(Text.literal("Bound to: ")
-						.append(Text.literal(ExclusiveItemUtil.getOwnerName(stack))
-								.formatted(Formatting.GOLD))
-						.formatted(Formatting.GRAY));
+				tooltip.add(
+						Text.translatable(
+								"exclusiveitem.tooltip.bound_to",
+								ExclusiveItemUtil.getOwnerName(stack)
+						).formatted(Formatting.GRAY, Formatting.GOLD)
+				);
 			} else {
-				tooltip.add(Text.literal("Unbound").formatted(Formatting.RED, Formatting.ITALIC));
+				tooltip.add(
+						Text.translatable("exclusiveitem.tooltip.unbound")
+								.formatted(Formatting.RED, Formatting.ITALIC)
+				);
 			}
 
 			String tag = ExclusiveItemUtil.getRequiredTag(stack);
 			if (tag != null && !tag.isEmpty() && ExclusiveItemUtil.shouldShowRequiredTag(stack)) {
-				tooltip.add(Text.literal("Requires Tag: " + tag)
-						.formatted(Formatting.DARK_AQUA, Formatting.ITALIC));
+				tooltip.add(
+						Text.translatable("exclusiveitem.tooltip.requires_tag", tag)
+								.formatted(Formatting.DARK_AQUA, Formatting.ITALIC)
+				);
 			}
 
 
-			tooltip.add(Text.literal("Cannot be used by others.").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+			tooltip.add(
+					Text.translatable("exclusiveitem.tooltip.cannot_be_used")
+							.formatted(Formatting.DARK_GRAY, Formatting.ITALIC)
+			);
 		}
 	}
 

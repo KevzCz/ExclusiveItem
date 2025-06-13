@@ -10,6 +10,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryOps;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemCommands;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemStorage;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
@@ -43,18 +44,30 @@ public class ServerNetwork {
                     RegistryOps<NbtElement> ops = RegistryOps.of(NbtOps.INSTANCE, player.getRegistryManager());
                     claimed = ItemStack.CODEC.parse(ops, payload.itemNbt()).result().orElseThrow();
                 } catch (Exception e) {
-                    player.sendMessage(Text.literal("§cFailed to decode claimed item."), false);
+                    player.sendMessage(
+                            Text.translatable("exclusiveitem.message.decode_failed")
+                                    .formatted(Formatting.RED),
+                            false
+                    );
                     e.printStackTrace();
                     return;
                 }
 
                 if (!ExclusiveItemUtil.isExclusiveItem(claimed)) {
-                    player.sendMessage(Text.literal("§cInvalid exclusive item."), false);
+                    player.sendMessage(
+                            Text.translatable("exclusiveitem.message.invalid_exclusive_item")
+                                    .formatted(Formatting.RED),
+                            false
+                    );
                     return;
                 }
 
                 if (!ExclusiveItemUtil.isOwner(claimed, player)) {
-                    player.sendMessage(Text.literal("§cYou do not own this item."), false);
+                    player.sendMessage(
+                            Text.translatable("exclusiveitem.message.not_owner_item")
+                                    .formatted(Formatting.RED),
+                            false
+                    );
                     return;
                 }
 
@@ -89,12 +102,20 @@ public class ServerNetwork {
                 }
 
                 if (!allItemsPresent) {
-                    player.sendMessage(Text.literal("§cMissing one or more required items."), false);
+                    player.sendMessage(
+                            Text.translatable("exclusiveitem.message.missing_required_items")
+                                    .formatted(Formatting.RED),
+                            false
+                    );
                     return;
                 }
 
                 if (player.experienceLevel < xpRequired) {
-                    player.sendMessage(Text.literal("§cYou need at least " + xpRequired + " XP levels."), false);
+                    player.sendMessage(
+                            Text.translatable("exclusiveitem.message.insufficient_xp", xpRequired)
+                                    .formatted(Formatting.RED),
+                            false
+                    );
                     return;
                 }
 

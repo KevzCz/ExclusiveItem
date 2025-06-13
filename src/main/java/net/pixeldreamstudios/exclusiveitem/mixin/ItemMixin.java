@@ -27,29 +27,43 @@ public class ItemMixin {
     private void preventMining(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity miner, CallbackInfoReturnable<Boolean> cir) {
         if (miner instanceof PlayerEntity player && !world.isClient &&
                 ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(Text.literal("You can't mine with this tool.").formatted(Formatting.RED), true);
-            cir.setReturnValue(false);
+            player.sendMessage(
+                    Text.translatable("exclusiveitem.message.mine_with_tool_denied")
+                            .formatted(Formatting.RED),
+                    true
+            );cir.setReturnValue(false);
         }
     }
+
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
-    private void preventUsingExclusiveItems(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
+    private void preventExclusiveUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
         ItemStack stack = user.getStackInHand(hand);
 
-        if (!world.isClient &&
-                ExclusiveItemUtil.isExclusiveItem(stack) &&
-                !ExclusiveItemUtil.isOwner(stack, user)) {
-
+        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, user)) {
             if (stack.contains(DataComponentTypes.FOOD)) {
-                user.sendMessage(Text.literal("§cYou can't eat this!"), true);
+                user.sendMessage(
+                        Text.translatable("exclusiveitem.message.eat_denied")
+                                .formatted(Formatting.RED),
+                        true
+                );
             } else if (stack.isOf(ModItems.BOOK_ITEM)) {
-                user.sendMessage(Text.literal("§cThal'rin's Accord must be bound to you..."), true);
+                user.sendMessage(
+                        Text.translatable("exclusiveitem.message.thalrin_accord_denied")
+                                .formatted(Formatting.RED),
+                        true
+                );
             } else {
-                user.sendMessage(Text.literal("§cYou can't use this item."), true);
+                user.sendMessage(
+                        Text.translatable("exclusiveitem.message.generic_use_denied")
+                                .formatted(Formatting.RED),
+                        true
+                );
             }
 
-            cir.setReturnValue(TypedActionResult.fail(stack));
+            cir.setReturnValue(TypedActionResult.fail(stack)); // Prevents usage
         }
     }
+
 
 
 
@@ -57,21 +71,12 @@ public class ItemMixin {
     private void preventCanMine(BlockState state, World world, BlockPos pos, PlayerEntity miner, CallbackInfoReturnable<Boolean> cir) {
         ItemStack stack = miner.getMainHandStack();
         if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, miner)) {
+            miner.sendMessage(
+                    Text.translatable("exclusiveitem.message.mine_with_tool_denied")
+                            .formatted(Formatting.RED),
+                    true
+            );
             cir.setReturnValue(false);
-        }
-    }
-
-    @Inject(method = "use", at = @At("HEAD"), cancellable = true)
-    private void preventGenericUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
-        ItemStack stack = user.getStackInHand(hand);
-
-        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, user)) {
-            if (stack.isOf(ModItems.BOOK_ITEM)) {
-                user.sendMessage(Text.literal("§cThal'rin's Accord must be bound to you..."), true);
-            } else {
-                user.sendMessage(Text.literal("§cYou can't use this item."), true);
-            }
-            cir.setReturnValue(TypedActionResult.fail(stack));
         }
     }
 
@@ -80,7 +85,11 @@ public class ItemMixin {
     private void preventUseRelease(ItemStack stack, World world, LivingEntity user, int remainingUseTicks, CallbackInfo ci) {
         if (user instanceof PlayerEntity player && !world.isClient &&
                 ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(Text.literal("You can't use this item.").formatted(Formatting.RED), true);
+            player.sendMessage(
+                    Text.translatable("exclusiveitem.message.use_release_denied")
+                            .formatted(Formatting.RED),
+                    true
+            );
             ci.cancel();
         }
     }

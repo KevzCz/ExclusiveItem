@@ -20,7 +20,11 @@ public class SplashPotionItemMixin {
     private void restrictUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
         ItemStack stack = user.getStackInHand(hand);
         if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, user)) {
-            user.sendMessage(Text.literal("You can't throw this potion!").formatted(Formatting.RED), true);
+            user.sendMessage(
+                    Text.translatable("exclusiveitem.message.throw_splash_potion_denied")
+                            .formatted(Formatting.RED),
+                    true
+            );
             cir.setReturnValue(TypedActionResult.fail(stack));
         }
     }

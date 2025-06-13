@@ -20,6 +20,6 @@ public record RequestExclusiveItemsPayload() implements CustomPayload {
     }
 
     public void write(PacketByteBuf buf) {
-        // Nothing to write for now
+
     }
 }
