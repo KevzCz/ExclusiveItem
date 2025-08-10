@@ -43,6 +43,7 @@ public class ExclusiveItemCommands {
                             NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
 
                             nbt.putBoolean("ExclusiveItem", true);
+                            // no default on_use_bind set here (defaults to pickup binding)
                             stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
 
                             player.sendMessage(Text.literal("Item tagged as Exclusive.").formatted(Formatting.GREEN), false);
@@ -83,6 +84,9 @@ public class ExclusiveItemCommands {
                             nbt.remove("exclusiveOwner");
                             nbt.remove("exclusiveOwnerName");
                             nbt.remove("requiredTag");
+                            nbt.remove("showRequiredTag");
+                            nbt.remove("exclusiveID");
+                            nbt.remove("on_use_bind");
 
                             stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
                             player.sendMessage(Text.literal("Exclusive tag removed from item.").formatted(Formatting.RED), false);
@@ -98,7 +102,6 @@ public class ExclusiveItemCommands {
 
                                             String tag = StringArgumentType.getString(ctx, "tag");
                                             boolean visible = BoolArgumentType.getBool(ctx, "visible");
-
 
                                             ItemStack stack = player.getMainHandStack();
                                             NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
@@ -122,6 +125,34 @@ public class ExclusiveItemCommands {
                                 )
                         )
                 )
+                .then(CommandManager.literal("set_on_use_bind")
+                        .requires(source -> source.hasPermissionLevel(2))
+                        .then(argument("value", BoolArgumentType.bool())
+                                .executes(ctx -> {
+                                    ServerPlayerEntity player = ctx.getSource().getPlayer();
+                                    if (player == null) return 0;
+
+                                    boolean value = BoolArgumentType.getBool(ctx, "value");
+                                    ItemStack stack = player.getMainHandStack();
+
+                                    NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+                                    NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
+
+                                    if (!nbt.getBoolean("ExclusiveItem")) {
+                                        player.sendMessage(Text.literal("This item is not exclusive. Use /exclusiveitem add first.")
+                                                .formatted(Formatting.YELLOW), false);
+                                        return 1;
+                                    }
+
+                                    nbt.putBoolean("on_use_bind", value);
+                                    stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+
+                                    player.sendMessage(Text.literal("Set on_use_bind to " + value)
+                                            .formatted(Formatting.AQUA), false);
+                                    return 1;
+                                })
+                        )
+                )
                 .then(CommandManager.literal("info")
                         .requires(source -> source.hasPermissionLevel(2))
                         .executes(ctx -> {
@@ -140,11 +171,16 @@ public class ExclusiveItemCommands {
                             String owner = nbt.contains("exclusiveOwnerName") ? nbt.getString("exclusiveOwnerName") : "Unknown";
                             String tag = nbt.contains("requiredTag") ? nbt.getString("requiredTag") : "(None)";
                             boolean visible = !nbt.contains("showRequiredTag") || nbt.getBoolean("showRequiredTag");
+                            boolean onUse = nbt.contains("on_use_bind") && nbt.getBoolean("on_use_bind");
 
                             player.sendMessage(Text.literal("=== Exclusive Item Info ===").formatted(Formatting.GRAY));
                             player.sendMessage(Text.literal("Owner: ").append(Text.literal(owner).formatted(Formatting.GOLD)));
                             player.sendMessage(Text.literal("Required Tag: ").append(Text.literal(tag).formatted(Formatting.AQUA)));
                             player.sendMessage(Text.literal("Tag Visible in Tooltip: ").append(Text.literal(String.valueOf(visible)).formatted(Formatting.GREEN)));
+
+                            player.sendMessage(Text.literal("Bind Mode: ")
+                                    .append(Text.literal(onUse ? "On Use (sword/armor/trinket)" : "On Pickup")
+                                            .formatted(onUse ? Formatting.LIGHT_PURPLE : Formatting.GREEN)));
                             return 1;
                         })
                 )
@@ -170,20 +206,20 @@ public class ExclusiveItemCommands {
                 )
                 .then(CommandManager.literal("stored")
                         .executes(ctx -> {
-                                ServerPlayerEntity player = ctx.getSource().getPlayer();
-                                if (player == null) return 0;
+                            ServerPlayerEntity player = ctx.getSource().getPlayer();
+                            if (player == null) return 0;
 
                             List<ItemStack> stored = ExclusiveItemWorldStorage
                                     .get(player.getServerWorld())
                                     .getStacks(player.getRegistryManager(), player.getUuid());
 
                             if (stored.isEmpty()) {
-                                    player.sendMessage(Text.literal("You have no stored exclusive items.")
-                                            .formatted(Formatting.YELLOW), false);
-                                    return 1;
-                                }
+                                player.sendMessage(Text.literal("You have no stored exclusive items.")
+                                        .formatted(Formatting.YELLOW), false);
+                                return 1;
+                            }
 
-                                player.sendMessage(Text.literal("=== Stored Exclusive Items ===").formatted(Formatting.GRAY), false);
+                            player.sendMessage(Text.literal("=== Stored Exclusive Items ===").formatted(Formatting.GRAY), false);
 
                             for (int i = 0; i < stored.size(); i++) {
                                 ItemStack stack = stored.get(i);
@@ -201,10 +237,8 @@ public class ExclusiveItemCommands {
                                 player.sendMessage(line, false);
                             }
 
-
-                                return 1;
-                            }
-                        )
+                            return 1;
+                        })
                 )
                 .then(CommandManager.literal("overrideowner")
                         .requires(source -> source.hasPermissionLevel(2))
@@ -266,7 +300,6 @@ public class ExclusiveItemCommands {
                             return 1;
                         })
                 )
-
                 .then(CommandManager.literal("givefromstorage")
                         .then(CommandManager.argument("index", IntegerArgumentType.integer(0))
                                 .executes(ctx -> {
@@ -277,7 +310,6 @@ public class ExclusiveItemCommands {
                                     List<ItemStack> stored = ExclusiveItemWorldStorage
                                             .get(player.getServerWorld())
                                             .getStacks(player.getRegistryManager(), player.getUuid());
-
 
                                     if (index < 0 || index >= stored.size()) {
                                         player.sendMessage(Text.literal("Invalid index.").formatted(Formatting.RED), false);
@@ -292,9 +324,8 @@ public class ExclusiveItemCommands {
                                             .formatted(Formatting.AQUA), false);
                                     return 1;
                                 }))
-
-                ));
-
+                )
+        );
     }
 
     public static boolean isBypassing(ServerPlayerEntity player) {

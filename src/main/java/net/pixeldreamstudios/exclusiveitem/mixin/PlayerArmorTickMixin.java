@@ -22,20 +22,16 @@ public class PlayerArmorTickMixin {
         for (EquipmentSlot slot : EquipmentSlot.values()) {
             if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) {
                 ItemStack stack = player.getEquippedStack(slot);
+                if (stack.isEmpty()) continue;
 
-                if (!stack.isEmpty() &&
-                        ExclusiveItemUtil.isExclusiveItem(stack) &&
-                        !ExclusiveItemUtil.isOwner(stack, player)) {
-
+                if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
                     player.sendMessage(
-                            Text.translatable("exclusiveitem.message.armor_reject")
-                                    .formatted(Formatting.RED),
+                            Text.translatable("exclusiveitem.message.armor_reject").formatted(Formatting.RED),
                             true
                     );
                     if (!player.getInventory().insertStack(stack)) {
                         player.dropItem(stack, true);
                     }
-
                     player.equipStack(slot, ItemStack.EMPTY);
                 }
             }

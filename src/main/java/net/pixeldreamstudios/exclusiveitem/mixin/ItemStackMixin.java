@@ -8,17 +8,13 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
+import net.pixeldreamstudios.exclusiveitem.ExclusiveItemCommands;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemStorage;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
-import net.pixeldreamstudios.exclusiveitem.ExclusiveItemCommands;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,32 +32,16 @@ public class ItemStackMixin {
 		if (!world.isClient && entity instanceof PlayerEntity player) {
 			if (!ExclusiveItemCommands.isBypassing(player.getUuid()) &&
 					ExclusiveItemUtil.isExclusiveItem(stack) &&
-					!ExclusiveItemUtil.isOwned(stack)) {
+					!ExclusiveItemUtil.isOwned(stack) &&
+					!ExclusiveItemUtil.shouldBindOnUse(stack)) {
 
 				ExclusiveItemUtil.bindToPlayer(stack, player);
-
-				world.playSound(null, player.getBlockPos(), SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.PLAYERS, 0.4f, 0.75f);
-				world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
-
-				((ServerWorld) world).spawnParticles(ParticleTypes.ENCHANT,
-						player.getX(), player.getY() + 1, player.getZ(),
-						50, 0.5, 0.5, 0.5, 0.1);
-
-				((ServerWorld) world).spawnParticles(ParticleTypes.SOUL_FIRE_FLAME,
-						player.getX(), player.getY() + 1, player.getZ(),
-						20, 0.3, 0.3, 0.3, 0.01);
-
-				player.sendMessage(
-						Text.translatable("exclusiveitem.message.bind_soul")
-								.formatted(Formatting.RED),
-						true
-				);
 			}
+
 			if (ExclusiveItemUtil.isExclusiveItem(stack)) {
 				NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
 				if (component != null) {
 					NbtCompound nbt = component.copyNbt();
-
 
 					if (!nbt.containsUuid("exclusiveID")) {
 						nbt.putUuid("exclusiveID", java.util.UUID.randomUUID());
@@ -73,7 +53,6 @@ public class ItemStackMixin {
 					}
 				}
 			}
-
 		}
 	}
 
@@ -97,11 +76,15 @@ public class ItemStackMixin {
 						).formatted(Formatting.GRAY, Formatting.GOLD)
 				);
 			} else {
-				tooltip.add(
-						Text.translatable("exclusiveitem.tooltip.unbound")
-								.formatted(Formatting.RED, Formatting.ITALIC)
-				);
+				if (ExclusiveItemUtil.shouldBindOnUse(stack)) {
+					tooltip.add(Text.translatable("exclusiveitem.tooltip.bind_on_use")
+							.formatted(Formatting.RED, Formatting.ITALIC));
+				} else {
+					tooltip.add(Text.translatable("exclusiveitem.tooltip.bind_on_pickup")
+							.formatted(Formatting.RED, Formatting.ITALIC));
+				}
 			}
+
 
 			String tag = ExclusiveItemUtil.getRequiredTag(stack);
 			if (tag != null && !tag.isEmpty() && ExclusiveItemUtil.shouldShowRequiredTag(stack)) {
@@ -111,12 +94,10 @@ public class ItemStackMixin {
 				);
 			}
 
-
 			tooltip.add(
 					Text.translatable("exclusiveitem.tooltip.cannot_be_used")
 							.formatted(Formatting.DARK_GRAY, Formatting.ITALIC)
 			);
 		}
 	}
-
 }

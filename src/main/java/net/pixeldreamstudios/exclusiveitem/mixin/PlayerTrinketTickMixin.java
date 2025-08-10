@@ -23,7 +23,6 @@ public class PlayerTrinketTickMixin {
     @Inject(method = "tick", at = @At("TAIL"))
     private void checkExclusiveTrinkets(CallbackInfo ci) {
         PlayerEntity player = (PlayerEntity) (Object) this;
-
         if (player.getWorld().isClient) return;
 
         TrinketsApi.getTrinketComponent(player).ifPresent((TrinketComponent component) -> {
@@ -33,24 +32,22 @@ public class PlayerTrinketTickMixin {
                 SlotReference slotRef = pair.getLeft();
                 ItemStack stack = pair.getRight();
 
-                if (!stack.isEmpty() &&
-                        ExclusiveItemUtil.isExclusiveItem(stack) &&
-                        !ExclusiveItemUtil.isOwner(stack, player)) {
+                if (stack.isEmpty()) continue;
 
+                if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
                     player.sendMessage(
-                            Text.translatable("exclusiveitem.message.trinket_reject")
-                                    .formatted(Formatting.RED),
+                            Text.translatable("exclusiveitem.message.trinket_reject").formatted(Formatting.RED),
                             true
                     );
+
                     if (!player.getInventory().insertStack(stack)) {
-                        player.dropItem(stack, true); // Drop if inventory full
+                        player.dropItem(stack, true);
                     }
 
-                    // Manually unequip the item
                     TrinketInventory inv = slotRef.inventory();
                     inv.setStack(slotRef.index(), ItemStack.EMPTY);
-                    inv.markDirty(); // Mark changes
-                    inv.markUpdate(); // Ensure Trinkets syncs it
+                    inv.markDirty();
+                    inv.markUpdate();
                 }
             }
         });

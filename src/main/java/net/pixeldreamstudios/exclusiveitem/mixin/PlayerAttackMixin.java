@@ -17,17 +17,15 @@ public class PlayerAttackMixin {
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void preventExclusiveWeaponAttack(Entity target, CallbackInfo ci) {
         PlayerEntity player = (PlayerEntity) (Object) this;
-        ItemStack stack = player.getMainHandStack();
+        if (player.getWorld().isClient) return;
 
-        if (!player.getWorld().isClient &&
-                ExclusiveItemUtil.isExclusiveItem(stack) &&
-                !ExclusiveItemUtil.isOwner(stack, player)) {
+        ItemStack stack = player.getMainHandStack();
+        if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
             player.sendMessage(
-                    Text.translatable("exclusiveitem.message.attack_denied")
-                            .formatted(Formatting.RED),
+                    Text.translatable("exclusiveitem.message.attack_denied").formatted(Formatting.RED),
                     true
             );
-            ci.cancel(); // Cancel the attack
+            ci.cancel();
         }
     }
 }

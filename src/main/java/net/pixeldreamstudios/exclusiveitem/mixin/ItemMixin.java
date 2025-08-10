@@ -25,71 +25,48 @@ public class ItemMixin {
 
     @Inject(method = "postMine", at = @At("HEAD"), cancellable = true)
     private void preventMining(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity miner, CallbackInfoReturnable<Boolean> cir) {
-        if (miner instanceof PlayerEntity player && !world.isClient &&
-                ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(
-                    Text.translatable("exclusiveitem.message.mine_with_tool_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );cir.setReturnValue(false);
+        if (miner instanceof PlayerEntity player && !world.isClient) {
+            if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
+                player.sendMessage(Text.translatable("exclusiveitem.message.mine_with_tool_denied").formatted(Formatting.RED), true);
+                cir.setReturnValue(false);
+            }
         }
     }
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void preventExclusiveUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
+        if (world.isClient) return;
+
         ItemStack stack = user.getStackInHand(hand);
-
-        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, user)) {
+        if (!ExclusiveItemUtil.ensureOwnedForUse(stack, user)) {
             if (stack.contains(DataComponentTypes.FOOD)) {
-                user.sendMessage(
-                        Text.translatable("exclusiveitem.message.eat_denied")
-                                .formatted(Formatting.RED),
-                        true
-                );
+                user.sendMessage(Text.translatable("exclusiveitem.message.eat_denied").formatted(Formatting.RED), true);
             } else if (stack.isOf(ModItems.BOOK_ITEM)) {
-                user.sendMessage(
-                        Text.translatable("exclusiveitem.message.thalrin_accord_denied")
-                                .formatted(Formatting.RED),
-                        true
-                );
+                user.sendMessage(Text.translatable("exclusiveitem.message.thalrin_accord_denied").formatted(Formatting.RED), true);
             } else {
-                user.sendMessage(
-                        Text.translatable("exclusiveitem.message.generic_use_denied")
-                                .formatted(Formatting.RED),
-                        true
-                );
+                user.sendMessage(Text.translatable("exclusiveitem.message.generic_use_denied").formatted(Formatting.RED), true);
             }
-
-            cir.setReturnValue(TypedActionResult.fail(stack)); // Prevents usage
+            cir.setReturnValue(TypedActionResult.fail(stack));
         }
     }
 
-
-
-
     @Inject(method = "canMine", at = @At("HEAD"), cancellable = true)
     private void preventCanMine(BlockState state, World world, BlockPos pos, PlayerEntity miner, CallbackInfoReturnable<Boolean> cir) {
+        if (world.isClient) return;
+
         ItemStack stack = miner.getMainHandStack();
-        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, miner)) {
-            miner.sendMessage(
-                    Text.translatable("exclusiveitem.message.mine_with_tool_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );
+        if (!ExclusiveItemUtil.ensureOwnedForUse(stack, miner)) {
+            miner.sendMessage(Text.translatable("exclusiveitem.message.mine_with_tool_denied").formatted(Formatting.RED), true);
             cir.setReturnValue(false);
         }
     }
 
-
     @Inject(method = "onStoppedUsing", at = @At("HEAD"), cancellable = true)
     private void preventUseRelease(ItemStack stack, World world, LivingEntity user, int remainingUseTicks, CallbackInfo ci) {
-        if (user instanceof PlayerEntity player && !world.isClient &&
-                ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(
-                    Text.translatable("exclusiveitem.message.use_release_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );
+        if (world.isClient || !(user instanceof PlayerEntity player)) return;
+
+        if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
+            player.sendMessage(Text.translatable("exclusiveitem.message.use_release_denied").formatted(Formatting.RED), true);
             ci.cancel();
         }
     }

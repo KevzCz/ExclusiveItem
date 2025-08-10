@@ -17,26 +17,48 @@ public class CooldownHandler {
             for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
                 ItemStack main = player.getMainHandStack();
 
-                if (ExclusiveItemUtil.isExclusiveItem(main) && !ExclusiveItemUtil.isOwner(main, player)) {
-                    UUID playerId = player.getUuid();
-                    UUID itemId = ExclusiveItemUtil.getExclusiveID(main);
-                    if (itemId == null) continue;
+                if (!ExclusiveItemUtil.isExclusiveItem(main)) {
+                    cooldownTimers.remove(player.getUuid());
+                    continue;
+                }
 
-                    cooldownTimers.putIfAbsent(playerId, new WeakHashMap<>());
-                    Map<UUID, Integer> playerCooldowns = cooldownTimers.get(playerId);
+                boolean bindOnUse = ExclusiveItemUtil.shouldBindOnUse(main);
+                boolean isOwned   = ExclusiveItemUtil.isOwned(main);
+                boolean isOwner   = ExclusiveItemUtil.isOwner(main, player);
 
-                    int ticksLeft = playerCooldowns.getOrDefault(itemId, 0);
-                    if (ticksLeft <= 0) {
-                        player.getItemCooldownManager().set(main.getItem(), COOLDOWN_TICKS);
-                        playerCooldowns.put(itemId, COOLDOWN_TICKS);
+                boolean shouldApplyCooldown;
+                if (bindOnUse) {
+                    if (!isOwned) {
+                        shouldApplyCooldown = false;
                     } else {
-                        playerCooldowns.put(itemId, ticksLeft - 1);
+                        shouldApplyCooldown = !isOwner;
                     }
                 } else {
+                    shouldApplyCooldown = !isOwner;
+                }
+
+                if (!shouldApplyCooldown) {
                     cooldownTimers.remove(player.getUuid());
+                    continue;
+                }
+
+                UUID playerId = player.getUuid();
+                UUID itemId = ExclusiveItemUtil.getExclusiveID(main);
+                if (itemId == null) {
+                    continue;
+                }
+
+                cooldownTimers.putIfAbsent(playerId, new WeakHashMap<>());
+                Map<UUID, Integer> playerCooldowns = cooldownTimers.get(playerId);
+
+                int ticksLeft = playerCooldowns.getOrDefault(itemId, 0);
+                if (ticksLeft <= 0) {
+                    player.getItemCooldownManager().set(main.getItem(), COOLDOWN_TICKS);
+                    playerCooldowns.put(itemId, COOLDOWN_TICKS);
+                } else {
+                    playerCooldowns.put(itemId, ticksLeft - 1);
                 }
             }
         });
     }
-
 }

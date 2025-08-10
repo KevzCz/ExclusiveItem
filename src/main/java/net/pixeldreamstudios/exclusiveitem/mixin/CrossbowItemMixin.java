@@ -19,13 +19,11 @@ public class CrossbowItemMixin {
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void restrictCrossbowUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
+        if (world.isClient) return;
+
         ItemStack stack = user.getStackInHand(hand);
-        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, user)) {
-            user.sendMessage(
-                    Text.translatable("exclusiveitem.message.use_crossbow_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );
+        if (!ExclusiveItemUtil.ensureOwnedForUse(stack, user)) {
+            user.sendMessage(Text.translatable("exclusiveitem.message.use_crossbow_denied").formatted(Formatting.RED), true);
             cir.setReturnValue(TypedActionResult.fail(stack));
         }
     }

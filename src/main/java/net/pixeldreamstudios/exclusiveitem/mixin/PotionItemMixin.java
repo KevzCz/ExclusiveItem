@@ -18,14 +18,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class PotionItemMixin {
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void restrictDrinkPotion(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
-        ItemStack stack = user.getStackInHand(hand);
-        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, user)) {
-            user.sendMessage(
-                    Text.translatable("exclusiveitem.message.drink_potion_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );
-            cir.setReturnValue(TypedActionResult.fail(stack));
+        if (!world.isClient) {
+            ItemStack stack = user.getStackInHand(hand);
+            if (!ExclusiveItemUtil.ensureOwnedForUse(stack, user)) {
+                user.sendMessage(
+                        Text.translatable("exclusiveitem.message.drink_potion_denied")
+                                .formatted(Formatting.RED),
+                        true
+                );
+                cir.setReturnValue(TypedActionResult.fail(stack));
+            }
         }
     }
 }

@@ -25,7 +25,8 @@
 
   "exclusiveitem.tooltip.exclusive_item":          "⚔ Exclusive Item",
   "exclusiveitem.tooltip.bound_to":                "Bound to: %s",
-  "exclusiveitem.tooltip.unbound":                 "Unbound",
+  "exclusiveitem.tooltip.bind_on_pickup":          "Bound on Pick-up",
+  "exclusiveitem.tooltip.bind_on_use":             "Bound on Use",
   "exclusiveitem.tooltip.requires_tag":            "Requires Tag: %s",
   "exclusiveitem.tooltip.cannot_be_used":          "Cannot be used by others.",
 

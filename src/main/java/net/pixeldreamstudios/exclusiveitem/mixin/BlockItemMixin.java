@@ -22,13 +22,8 @@ public class BlockItemMixin {
         if (player == null || player.getWorld().isClient) return;
 
         ItemStack stack = context.getStack();
-
-        if (ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(
-                    Text.translatable("exclusiveitem.message.place_block_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );
+        if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
+            player.sendMessage(Text.translatable("exclusiveitem.message.place_block_denied").formatted(Formatting.RED), true);
             cir.setReturnValue(ActionResult.FAIL);
         }
     }

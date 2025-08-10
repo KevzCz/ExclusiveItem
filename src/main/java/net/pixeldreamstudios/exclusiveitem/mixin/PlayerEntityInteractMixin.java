@@ -23,19 +23,16 @@ public class PlayerEntityInteractMixin {
     )
     private void preventRightClick(Entity entity, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         PlayerEntity player = (PlayerEntity)(Object)this;
+        if (player.getWorld().isClient) return;
+
         ItemStack stack = player.getStackInHand(hand);
 
-        if (!player.getWorld().isClient &&
-                ExclusiveItemUtil.isExclusiveItem(stack) &&
-                !ExclusiveItemUtil.isOwner(stack, player)) {
+        if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
             player.sendMessage(
-                    Text.translatable("exclusiveitem.message.interact_denied")
-                            .formatted(Formatting.RED),
+                    Text.translatable("exclusiveitem.message.interact_denied").formatted(Formatting.RED),
                     true
             );
             cir.setReturnValue(ActionResult.FAIL);
         }
     }
 }
-
-

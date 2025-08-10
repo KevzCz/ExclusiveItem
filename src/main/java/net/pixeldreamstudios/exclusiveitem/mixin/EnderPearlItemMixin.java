@@ -3,7 +3,6 @@ package net.pixeldreamstudios.exclusiveitem.mixin;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.EnderPearlItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.SnowballItem;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -19,15 +18,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class EnderPearlItemMixin {
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void restrictUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
+        if (world.isClient) return;
+
         ItemStack stack = user.getStackInHand(hand);
-        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, user)) {
-            user.sendMessage(
-                    Text.translatable("exclusiveitem.message.use_pearl_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );
+        if (!ExclusiveItemUtil.ensureOwnedForUse(stack, user)) {
+            user.sendMessage(Text.translatable("exclusiveitem.message.use_pearl_denied").formatted(Formatting.RED), true);
             cir.setReturnValue(TypedActionResult.fail(stack));
         }
     }
 }
-

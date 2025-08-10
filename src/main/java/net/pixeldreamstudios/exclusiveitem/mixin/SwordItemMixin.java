@@ -20,29 +20,23 @@ public class SwordItemMixin {
 
     @Inject(method = "postHit", at = @At("HEAD"), cancellable = true)
     private void restrictAttack(ItemStack stack, LivingEntity target, LivingEntity attacker, CallbackInfoReturnable<Boolean> cir) {
-        if (attacker instanceof PlayerEntity player && !player.getWorld().isClient &&
-                ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, player)) {
-            player.sendMessage(
-                    Text.translatable("exclusiveitem.message.attack_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );
-            cir.setReturnValue(false);
+        if (attacker instanceof PlayerEntity player && !player.getWorld().isClient) {
+            if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
+                player.sendMessage(Text.translatable("exclusiveitem.message.attack_denied").formatted(Formatting.RED), true);
+                cir.setReturnValue(false);
+            }
         }
     }
+
     @Inject(method = "canMine", at = @At("HEAD"), cancellable = true)
     private void restrictMine(BlockState state, World world, BlockPos pos, PlayerEntity miner, CallbackInfoReturnable<Boolean> cir) {
         ItemStack stack = miner.getMainHandStack();
 
-        if (!world.isClient && ExclusiveItemUtil.isExclusiveItem(stack) && !ExclusiveItemUtil.isOwner(stack, miner)) {
-            miner.sendMessage(
-                    Text.translatable("exclusiveitem.message.mine_with_tool_denied")
-                            .formatted(Formatting.RED),
-                    true
-            );
-            cir.setReturnValue(false);
+        if (!world.isClient) {
+            if (!ExclusiveItemUtil.ensureOwnedForUse(stack, miner)) {
+                miner.sendMessage(Text.translatable("exclusiveitem.message.mine_with_tool_denied").formatted(Formatting.RED), true);
+                cir.setReturnValue(false);
+            }
         }
     }
-
 }
-
