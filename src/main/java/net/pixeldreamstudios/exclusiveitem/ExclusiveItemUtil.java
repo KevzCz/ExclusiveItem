@@ -144,6 +144,8 @@ public class ExclusiveItemUtil {
     }
 
     public static void applyAutoExclusiveRules(ItemStack stack) {
+        if (!ExclusiveItemConfig.INSTANCE.autoExclusiveEnabled) return;
+
         ExclusiveItemConfig.AutoExclusiveEntry match = ExclusiveItemConfig.INSTANCE.match(stack);
         if (match == null) return;
 

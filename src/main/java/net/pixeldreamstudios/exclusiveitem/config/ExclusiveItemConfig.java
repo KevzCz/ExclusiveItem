@@ -63,6 +63,9 @@ public class ExclusiveItemConfig {
 
     public boolean guiEnabled = true;
     public int requiredXpLevels = 0;
+
+    public boolean autoExclusiveEnabled = false;
+
     public List<RequiredItem> requiredItems = defaultRequiredItems();
     public List<AutoExclusiveEntry> autoExclusive = defaultAutoExclusive();
 
@@ -102,6 +105,11 @@ public class ExclusiveItemConfig {
             }
             if (!root.has("requiredXpLevels")) {
                 loaded.requiredXpLevels = 0;
+                changed = true;
+            }
+
+            if (!root.has("autoExclusiveEnabled")) {
+                loaded.autoExclusiveEnabled = false;
                 changed = true;
             }
 
@@ -196,6 +204,7 @@ public class ExclusiveItemConfig {
             this.schemaVersion = loaded.schemaVersion;
             this.guiEnabled = loaded.guiEnabled;
             this.requiredXpLevels = loaded.requiredXpLevels;
+            this.autoExclusiveEnabled = loaded.autoExclusiveEnabled;
             this.requiredItems = loaded.requiredItems;
             this.autoExclusive = loaded.autoExclusive;
 
@@ -266,6 +275,7 @@ public class ExclusiveItemConfig {
 
     private static List<AutoExclusiveEntry> defaultAutoExclusive() {
         List<AutoExclusiveEntry> list = new ArrayList<>();
+        list.add(AutoExclusiveEntry.forItem("minecraft:nether_star", false));
         return list;
     }
 }
