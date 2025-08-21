@@ -30,6 +30,9 @@ public class ItemStackMixin {
 	private void bindToPlayerOnTick(World world, Entity entity, int slot, boolean selected, CallbackInfo ci) {
 		ItemStack stack = (ItemStack)(Object)this;
 		if (!world.isClient && entity instanceof PlayerEntity player) {
+
+			ExclusiveItemUtil.applyAutoExclusiveRules(stack);
+
 			if (!ExclusiveItemCommands.isBypassing(player.getUuid()) &&
 					ExclusiveItemUtil.isExclusiveItem(stack) &&
 					!ExclusiveItemUtil.isOwned(stack) &&
@@ -84,7 +87,6 @@ public class ItemStackMixin {
 							.formatted(Formatting.RED, Formatting.ITALIC));
 				}
 			}
-
 
 			String tag = ExclusiveItemUtil.getRequiredTag(stack);
 			if (tag != null && !tag.isEmpty() && ExclusiveItemUtil.shouldShowRequiredTag(stack)) {

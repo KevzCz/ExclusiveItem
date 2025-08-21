@@ -8,6 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.pixeldreamstudios.exclusiveitem.config.ExclusiveItemConfig;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class ExclusiveItemUtil {
         NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
         return component != null && component.copyNbt().contains("exclusiveOwner");
     }
+
     public static boolean shouldBindOnUse(ItemStack stack) {
         NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
         if (component == null) return false;
@@ -38,7 +40,6 @@ public class ExclusiveItemUtil {
             bindToPlayer(stack, player);
             return isOwner(stack, player);
         }
-
         return false;
     }
 
@@ -48,6 +49,7 @@ public class ExclusiveItemUtil {
         nbt.putBoolean("on_use_bind", value);
         stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
     }
+
     public static void bindToPlayer(ItemStack stack, PlayerEntity player) {
         NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
         NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
@@ -97,7 +99,6 @@ public class ExclusiveItemUtil {
             return false;
         }
 
-
         if (nbt.contains("requiredTag")) {
             String requiredTag = nbt.getString("requiredTag");
             return player.getCommandTags().contains(requiredTag);
@@ -105,6 +106,7 @@ public class ExclusiveItemUtil {
 
         return true;
     }
+
     public static boolean shouldShowRequiredTag(ItemStack stack) {
         NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
         if (component == null) return true;
@@ -138,7 +140,29 @@ public class ExclusiveItemUtil {
         nbt.putString("requiredTag", "TagRequirement");
 
         stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
-
         return stack;
+    }
+
+    public static void applyAutoExclusiveRules(ItemStack stack) {
+        ExclusiveItemConfig.AutoExclusiveEntry match = ExclusiveItemConfig.INSTANCE.match(stack);
+        if (match == null) return;
+
+        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+        NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
+        boolean changed = false;
+
+        if (!nbt.getBoolean("ExclusiveItem")) {
+            nbt.putBoolean("ExclusiveItem", true);
+            changed = true;
+        }
+
+        if (!nbt.contains("on_use_bind") || nbt.getBoolean("on_use_bind") != match.bindOnUse) {
+            nbt.putBoolean("on_use_bind", match.bindOnUse);
+            changed = true;
+        }
+
+        if (changed) {
+            stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+        }
     }
 }
