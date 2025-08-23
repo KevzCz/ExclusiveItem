@@ -4,15 +4,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.pixeldreamstudios.exclusiveitem.item.ModItems;
 import net.pixeldreamstudios.exclusiveitem.network.SyncExclusiveItemsPayload;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 import static net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil.getExclusiveID;
 
@@ -64,7 +63,18 @@ public class ExclusiveItemStorage {
         stacks.add(copy);
         storage.setStacks(player.getRegistryManager(), player.getUuid(), stacks);
     }
+    public static void remove(ServerPlayerEntity player, ItemStack stack) {
+        ServerWorld world = player.getServerWorld();
+        ExclusiveItemWorldStorage storage = ExclusiveItemWorldStorage.get(world);
+        List<ItemStack> stacks = storage.getStacks(player.getRegistryManager(), player.getUuid());
 
+        UUID targetId = getExclusiveID(stack);
+        if (targetId == null) return;
 
+        stacks.removeIf(existing -> targetId.equals(getExclusiveID(existing)));
 
+        storage.setStacks(player.getRegistryManager(), player.getUuid(), stacks);
+
+        syncToClient(player);
+    }
 }
