@@ -7,7 +7,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.pixeldreamstudios.exclusiveitem.config.ExclusiveItemConfig;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,20 +62,28 @@ public class ExclusiveItemUtil {
         }
 
         if (!nbt.containsUuid("exclusiveID")) {
-            nbt.putUuid("exclusiveID", UUID.randomUUID());
+            nbt.putUuid("exclusiveID", java.util.UUID.randomUUID());
         }
 
         stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
 
         if (player instanceof ServerPlayerEntity serverPlayer && isOwner(stack, player)) {
-            ExclusiveItemStorage.add(serverPlayer, stack);
+            boolean shouldAdd = net.pixeldreamstudios.exclusiveitem.api.ExclusiveItemEvents
+                    .SHOULD_ADD_TO_STORAGE
+                    .invoker()
+                    .shouldAdd(serverPlayer, stack);
+
+            if (shouldAdd) {
+                net.pixeldreamstudios.exclusiveitem.ExclusiveItemStorage.add(serverPlayer, stack);
+            }
 
             if (newlyBound) {
-                ServerWorld sw = serverPlayer.getServerWorld();
-                BindEffects.play(sw, serverPlayer);
+                net.minecraft.server.world.ServerWorld sw = serverPlayer.getServerWorld();
+                net.pixeldreamstudios.exclusiveitem.BindEffects.play(sw, serverPlayer);
             }
         }
     }
+
 
     @Nullable
     public static UUID getExclusiveID(ItemStack stack) {

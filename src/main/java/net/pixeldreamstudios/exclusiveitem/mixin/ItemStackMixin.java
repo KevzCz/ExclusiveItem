@@ -15,6 +15,7 @@ import net.minecraft.world.World;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemCommands;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemStorage;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
+import net.pixeldreamstudios.exclusiveitem.api.ExclusiveItemEvents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -52,7 +53,12 @@ public class ItemStackMixin {
 					}
 
 					if (player instanceof ServerPlayerEntity serverPlayer) {
-						ExclusiveItemStorage.add(serverPlayer, stack);
+						boolean shouldAdd = ExclusiveItemEvents.SHOULD_ADD_TO_STORAGE
+								.invoker()
+								.shouldAdd(serverPlayer, stack);
+						if (shouldAdd) {
+							ExclusiveItemStorage.add(serverPlayer, stack);
+						}
 					}
 				}
 			}

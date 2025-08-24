@@ -63,6 +63,11 @@ public class ExclusiveItemStorage {
         stacks.add(copy);
         storage.setStacks(player.getRegistryManager(), player.getUuid(), stacks);
     }
+    public static void addAndSync(ServerPlayerEntity player, ItemStack stack) {
+        add(player, stack);
+        syncToClient(player);
+    }
+
     public static void remove(ServerPlayerEntity player, ItemStack stack) {
         ServerWorld world = player.getServerWorld();
         ExclusiveItemWorldStorage storage = ExclusiveItemWorldStorage.get(world);
