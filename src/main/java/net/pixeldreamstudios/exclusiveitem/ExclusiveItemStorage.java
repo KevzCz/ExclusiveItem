@@ -9,6 +9,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.pixeldreamstudios.exclusiveitem.item.ModItems;
 import net.pixeldreamstudios.exclusiveitem.network.SyncExclusiveItemsPayload;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +18,8 @@ import java.util.UUID;
 import static net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil.getExclusiveID;
 
 public class ExclusiveItemStorage {
+    private static final Logger LOGGER = LoggerFactory.getLogger("ExclusiveItemStorage");
+    
     public static void syncToClient(ServerPlayerEntity player) {
         ServerWorld world = player.getServerWorld();
         ExclusiveItemWorldStorage storage = ExclusiveItemWorldStorage.get(world);
@@ -30,7 +34,7 @@ public class ExclusiveItemStorage {
                     list.add(compound);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error("Failed to encode exclusive item for sync: {}", stack, e);
             }
         }
 

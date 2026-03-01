@@ -43,7 +43,6 @@ public class ExclusiveItemCommands {
                             NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
 
                             nbt.putBoolean("ExclusiveItem", true);
-                            // no default on_use_bind set here (defaults to pickup binding)
                             stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
 
                             player.sendMessage(Text.literal("Item tagged as Exclusive.").formatted(Formatting.GREEN), false);

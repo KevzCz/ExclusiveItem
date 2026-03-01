@@ -6,9 +6,11 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryOps;
 import net.minecraft.sound.SoundEvents;
@@ -20,6 +22,7 @@ import net.pixeldreamstudios.exclusiveitem.item.ModItems;
 import net.pixeldreamstudios.exclusiveitem.network.ClaimExclusiveItemPayload;
 import org.joml.Quaternionf;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ClaimConfirmationScreen extends Screen {
@@ -39,7 +42,7 @@ public class ClaimConfirmationScreen extends Screen {
 
 
         if (item.isOf(ModItems.BOOK_ITEM)) {
-            ItemStack book = new ItemStack(net.minecraft.item.Items.BOOK);
+            ItemStack book = new ItemStack(Items.BOOK);
             book.setCount(1);
             this.requiredItems = List.of(book);
             this.requiredXp = 10;
@@ -200,7 +203,7 @@ public class ClaimConfirmationScreen extends Screen {
         ), centerX + btnWidth / 2 + spacing, btnY + 6, 0xFFFFFF);
 
         if (hoverClaim && !canClaim) {
-            List<Text> tooltip = new java.util.ArrayList<>();
+            List<Text> tooltip = new ArrayList<>();
             tooltip.add(Text.translatable("exclusiveitem.gui.tooltip_missing"));
 
             int currentXp = player != null ? player.experienceLevel : 0;
@@ -251,12 +254,10 @@ public class ClaimConfirmationScreen extends Screen {
                     player = client.player;
                     var world = client.world;
 
-                    // Play magical sounds
                     player.playSound(SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, 1.0f, 1.0f);
                     player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.5f);
                     player.playSound(SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE, 0.7f, 0.8f);
 
-                    // Spawn ENCHANT particles around the player
                     var rand = player.getRandom();
                     for (int i = 0; i < 20; i++) {
                         double offsetX = (rand.nextDouble() - 0.5) * 1.5;
@@ -264,7 +265,7 @@ public class ClaimConfirmationScreen extends Screen {
                         double offsetZ = (rand.nextDouble() - 0.5) * 1.5;
 
                         world.addParticle(
-                                net.minecraft.particle.ParticleTypes.ENCHANT,
+                                ParticleTypes.ENCHANT,
                                 player.getX() + offsetX,
                                 player.getY() + offsetY,
                                 player.getZ() + offsetZ,
@@ -291,13 +292,10 @@ public class ClaimConfirmationScreen extends Screen {
         float spiralY = -bob;
         float angleRad = 0f;
 
-        // Determine phase
         if (animating) {
             if (elapsed < 1000) {
-                // Crack1 phase
                 context.drawTexture(CRACK1, centerX - 8, centerY - 8, 0, 0, 32, 32, 32, 32);
             } else if (elapsed < 2000) {
-                // Crack2 phase
                 context.drawTexture(CRACK2, centerX - 8, centerY - 8, 0, 0, 32, 32, 32, 32);
             } else {
                 context.drawTexture(CRACK2, centerX - 8, centerY - 8, 0, 0, 32, 32, 32, 32);

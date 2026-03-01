@@ -1,34 +1,32 @@
 package net.pixeldreamstudios.exclusiveitem;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.pixeldreamstudios.exclusiveitem.api.ExclusiveItemEvents;
+import net.pixeldreamstudios.exclusiveitem.api.BindingResult;
 import net.pixeldreamstudios.exclusiveitem.config.ExclusiveItemConfig;
+import net.pixeldreamstudios.exclusiveitem.util.NbtCache;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
+import static net.pixeldreamstudios.exclusiveitem.api.ExclusiveItemConstants.*;
+
 public class ExclusiveItemUtil {
 
     public static boolean isExclusiveItem(ItemStack stack) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        return component != null && component.copyNbt().getBoolean("ExclusiveItem");
+        return NbtCache.withNbt(stack, nbt -> nbt.getBoolean(NBT_EXCLUSIVE_ITEM), false);
     }
 
     public static boolean isOwned(ItemStack stack) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        return component != null && component.copyNbt().contains("exclusiveOwner");
+        return NbtCache.withNbt(stack, nbt -> nbt.contains(NBT_EXCLUSIVE_OWNER), false);
     }
 
     public static boolean shouldBindOnUse(ItemStack stack) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        if (component == null) return false;
-        NbtCompound nbt = component.copyNbt();
-        return nbt.contains("on_use_bind") && nbt.getBoolean("on_use_bind");
+        return NbtCache.withNbt(stack, nbt -> nbt.contains(NBT_ON_USE_BIND) && nbt.getBoolean(NBT_ON_USE_BIND), false);
     }
 
     public static boolean ensureOwnedForUse(ItemStack stack, PlayerEntity player) {
@@ -43,43 +41,49 @@ public class ExclusiveItemUtil {
     }
 
     public static void setBindOnUse(ItemStack stack, boolean value) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
-        nbt.putBoolean("on_use_bind", value);
-        stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+        NbtCache.modifyNbt(stack, nbt -> nbt.putBoolean(NBT_ON_USE_BIND, value));
     }
 
     public static void bindToPlayer(ItemStack stack, PlayerEntity player) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
-
-        boolean newlyBound = false;
-
-        if (!nbt.contains("exclusiveOwner")) {
-            nbt.putUuid("exclusiveOwner", player.getUuid());
-            nbt.putString("exclusiveOwnerName", player.getName().getString());
-            newlyBound = true;
+        if (!(player instanceof ServerPlayerEntity serverPlayer)) {
+            return;
         }
 
-        if (!nbt.containsUuid("exclusiveID")) {
-            nbt.putUuid("exclusiveID", java.util.UUID.randomUUID());
+        if (!ExclusiveItemEvents.SHOULD_ALLOW_BINDING.invoker().shouldAllow(serverPlayer, stack)) {
+            ExclusiveItemEvents.ON_BINDING_ATTEMPT_FAILED.invoker().onFailed(
+                serverPlayer, stack, BindingResult.BindingFailureReason.EVENT_CANCELLED
+            );
+            return;
         }
 
-        stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+        boolean[] newlyBound = {false};
+        
+        NbtCache.modifyNbt(stack, nbt -> {
+            if (!nbt.contains(NBT_EXCLUSIVE_OWNER)) {
+                nbt.putUuid(NBT_EXCLUSIVE_OWNER, player.getUuid());
+                nbt.putString(NBT_EXCLUSIVE_OWNER_NAME, player.getName().getString());
+                newlyBound[0] = true;
+            }
 
-        if (player instanceof ServerPlayerEntity serverPlayer && isOwner(stack, player)) {
-            boolean shouldAdd = net.pixeldreamstudios.exclusiveitem.api.ExclusiveItemEvents
-                    .SHOULD_ADD_TO_STORAGE
+            if (!nbt.containsUuid(NBT_EXCLUSIVE_ID)) {
+                nbt.putUuid(NBT_EXCLUSIVE_ID, UUID.randomUUID());
+            }
+        });
+
+        if (isOwner(stack, player)) {
+            ExclusiveItemEvents.ON_ITEM_BOUND.invoker().onBound(serverPlayer, stack, newlyBound[0]);
+            
+            boolean shouldAdd = ExclusiveItemEvents.SHOULD_ADD_TO_STORAGE
                     .invoker()
                     .shouldAdd(serverPlayer, stack);
 
             if (shouldAdd) {
-                net.pixeldreamstudios.exclusiveitem.ExclusiveItemStorage.add(serverPlayer, stack);
+                ExclusiveItemStorage.add(serverPlayer, stack);
             }
 
-            if (newlyBound) {
-                net.minecraft.server.world.ServerWorld sw = serverPlayer.getServerWorld();
-                net.pixeldreamstudios.exclusiveitem.BindEffects.play(sw, serverPlayer);
+            if (newlyBound[0]) {
+                ServerWorld sw = serverPlayer.getServerWorld();
+                BindEffects.play(sw, serverPlayer);
             }
         }
     }
@@ -87,66 +91,57 @@ public class ExclusiveItemUtil {
 
     @Nullable
     public static UUID getExclusiveID(ItemStack stack) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        if (component == null) return null;
-
-        NbtCompound nbt = component.copyNbt();
-        return nbt.containsUuid("exclusiveID") ? nbt.getUuid("exclusiveID") : null;
+        return NbtCache.withNbt(stack, nbt -> 
+            nbt.containsUuid(NBT_EXCLUSIVE_ID) ? nbt.getUuid(NBT_EXCLUSIVE_ID) : null, null
+        );
     }
 
     public static boolean isOwner(ItemStack stack, PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity serverPlayer && ExclusiveItemCommands.isBypassing(serverPlayer)) return true;
-
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        if (component == null) return false;
-
-        NbtCompound nbt = component.copyNbt();
-
-        if (!nbt.containsUuid("exclusiveOwner") || !player.getUuid().equals(nbt.getUuid("exclusiveOwner"))) {
-            return false;
+        if (player instanceof ServerPlayerEntity serverPlayer && ExclusiveItemCommands.isBypassing(serverPlayer)) {
+            return true;
         }
 
-        if (nbt.contains("requiredTag")) {
-            String requiredTag = nbt.getString("requiredTag");
-            return player.getCommandTags().contains(requiredTag);
-        }
+        return NbtCache.withNbt(stack, nbt -> {
+            if (!nbt.containsUuid(NBT_EXCLUSIVE_OWNER) || !player.getUuid().equals(nbt.getUuid(NBT_EXCLUSIVE_OWNER))) {
+                return false;
+            }
 
-        return true;
+            if (nbt.contains(NBT_REQUIRED_TAG)) {
+                String requiredTag = nbt.getString(NBT_REQUIRED_TAG);
+                return player.getCommandTags().contains(requiredTag);
+            }
+
+            return true;
+        }, false);
     }
 
     public static boolean shouldShowRequiredTag(ItemStack stack) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        if (component == null) return true;
-        NbtCompound nbt = component.copyNbt();
-        return !nbt.contains("showRequiredTag") || nbt.getBoolean("showRequiredTag");
+        return NbtCache.withNbt(stack, nbt -> 
+            !nbt.contains(NBT_SHOW_REQUIRED_TAG) || nbt.getBoolean(NBT_SHOW_REQUIRED_TAG), true
+        );
     }
 
     public static String getOwnerName(ItemStack stack) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        if (component == null) return "Nobody";
-        NbtCompound nbt = component.copyNbt();
-        return nbt.getString("exclusiveOwnerName");
+        return NbtCache.withNbt(stack, nbt -> nbt.getString(NBT_EXCLUSIVE_OWNER_NAME), "Nobody");
     }
 
     public static String getRequiredTag(ItemStack stack) {
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        if (component == null) return null;
-        NbtCompound nbt = component.copyNbt();
-        return nbt.contains("requiredTag") ? nbt.getString("requiredTag") : null;
+        return NbtCache.withNbt(stack, nbt -> 
+            nbt.contains(NBT_REQUIRED_TAG) ? nbt.getString(NBT_REQUIRED_TAG) : null, null
+        );
     }
 
     public static ItemStack createExclusiveItemOwnedBySomebodyElse(Item item) {
         ItemStack stack = new ItemStack(item);
 
-        NbtCompound nbt = new NbtCompound();
-        nbt.putBoolean("ExclusiveItem", true);
-
-        UUID fakeOwnerUUID = UUID.nameUUIDFromBytes("SomebodyElse".getBytes());
-        nbt.putUuid("exclusiveOwner", fakeOwnerUUID);
-        nbt.putString("exclusiveOwnerName", "SomebodyElse");
-        nbt.putString("requiredTag", "TagRequirement");
-
-        stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+        NbtCache.modifyNbt(stack, nbt -> {
+            nbt.putBoolean(NBT_EXCLUSIVE_ITEM, true);
+            UUID fakeOwnerUUID = UUID.nameUUIDFromBytes("SomebodyElse".getBytes());
+            nbt.putUuid(NBT_EXCLUSIVE_OWNER, fakeOwnerUUID);
+            nbt.putString(NBT_EXCLUSIVE_OWNER_NAME, "SomebodyElse");
+            nbt.putString(NBT_REQUIRED_TAG, "TagRequirement");
+        });
+        
         return stack;
     }
 
@@ -156,22 +151,14 @@ public class ExclusiveItemUtil {
         ExclusiveItemConfig.AutoExclusiveEntry match = ExclusiveItemConfig.INSTANCE.match(stack);
         if (match == null) return;
 
-        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-        NbtCompound nbt = component != null ? component.copyNbt() : new NbtCompound();
-        boolean changed = false;
+        NbtCache.modifyNbt(stack, nbt -> {
+            if (!nbt.getBoolean(NBT_EXCLUSIVE_ITEM)) {
+                nbt.putBoolean(NBT_EXCLUSIVE_ITEM, true);
+            }
 
-        if (!nbt.getBoolean("ExclusiveItem")) {
-            nbt.putBoolean("ExclusiveItem", true);
-            changed = true;
-        }
-
-        if (!nbt.contains("on_use_bind") || nbt.getBoolean("on_use_bind") != match.bindOnUse) {
-            nbt.putBoolean("on_use_bind", match.bindOnUse);
-            changed = true;
-        }
-
-        if (changed) {
-            stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
-        }
+            if (!nbt.contains(NBT_ON_USE_BIND) || nbt.getBoolean(NBT_ON_USE_BIND) != match.bindOnUse) {
+                nbt.putBoolean(NBT_ON_USE_BIND, match.bindOnUse);
+            }
+        });
     }
 }
