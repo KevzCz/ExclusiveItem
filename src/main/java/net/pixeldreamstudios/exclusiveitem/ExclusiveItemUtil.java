@@ -3,6 +3,7 @@ package net.pixeldreamstudios.exclusiveitem;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.pixeldreamstudios.exclusiveitem.api.ExclusiveItemEvents;
@@ -151,14 +152,17 @@ public class ExclusiveItemUtil {
         ExclusiveItemConfig.AutoExclusiveEntry match = ExclusiveItemConfig.INSTANCE.match(stack);
         if (match == null) return;
 
-        NbtCache.modifyNbt(stack, nbt -> {
-            if (!nbt.getBoolean(NBT_EXCLUSIVE_ITEM)) {
-                nbt.putBoolean(NBT_EXCLUSIVE_ITEM, true);
-            }
+        NbtCompound existing = NbtCache.getNbt(stack);
+        if (existing != null
+                && existing.getBoolean(NBT_EXCLUSIVE_ITEM)
+                && existing.contains(NBT_ON_USE_BIND)
+                && existing.getBoolean(NBT_ON_USE_BIND) == match.bindOnUse) {
+            return;
+        }
 
-            if (!nbt.contains(NBT_ON_USE_BIND) || nbt.getBoolean(NBT_ON_USE_BIND) != match.bindOnUse) {
-                nbt.putBoolean(NBT_ON_USE_BIND, match.bindOnUse);
-            }
+        NbtCache.modifyNbt(stack, nbt -> {
+            nbt.putBoolean(NBT_EXCLUSIVE_ITEM, true);
+            nbt.putBoolean(NBT_ON_USE_BIND, match.bindOnUse);
         });
     }
 }

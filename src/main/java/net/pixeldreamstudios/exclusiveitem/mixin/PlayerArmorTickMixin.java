@@ -14,26 +14,28 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PlayerEntity.class)
 public class PlayerArmorTickMixin {
 
+    private static final EquipmentSlot[] ARMOR_SLOTS = {
+        EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
+    };
+
     @Inject(method = "tick", at = @At("HEAD"))
     private void checkExclusiveArmor(CallbackInfo ci) {
         PlayerEntity player = (PlayerEntity) (Object) this;
         if (player.getWorld().isClient) return;
 
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) {
-                ItemStack stack = player.getEquippedStack(slot);
-                if (stack.isEmpty()) continue;
+        for (EquipmentSlot slot : ARMOR_SLOTS) {
+            ItemStack stack = player.getEquippedStack(slot);
+            if (stack.isEmpty()) continue;
 
-                if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
-                    player.sendMessage(
-                            Text.translatable("exclusiveitem.message.armor_reject").formatted(Formatting.RED),
-                            true
-                    );
-                    if (!player.getInventory().insertStack(stack)) {
-                        player.dropItem(stack, true);
-                    }
-                    player.equipStack(slot, ItemStack.EMPTY);
+            if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
+                player.sendMessage(
+                        Text.translatable("exclusiveitem.message.armor_reject").formatted(Formatting.RED),
+                        true
+                );
+                if (!player.getInventory().insertStack(stack)) {
+                    player.dropItem(stack, true);
                 }
+                player.equipStack(slot, ItemStack.EMPTY);
             }
         }
     }

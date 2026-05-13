@@ -34,6 +34,8 @@ public class PlayerTrinketTickMixin {
 
                 if (stack.isEmpty()) continue;
 
+                if (!ExclusiveItemUtil.isExclusiveItem(stack)) continue;
+
                 if (!ExclusiveItemUtil.ensureOwnedForUse(stack, player)) {
                     player.sendMessage(
                             Text.translatable("exclusiveitem.message.trinket_reject").formatted(Formatting.RED),

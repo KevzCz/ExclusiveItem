@@ -1,13 +1,10 @@
 package net.pixeldreamstudios.exclusiveitem.mixin;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -16,6 +13,7 @@ import net.pixeldreamstudios.exclusiveitem.ExclusiveItemCommands;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemStorage;
 import net.pixeldreamstudios.exclusiveitem.ExclusiveItemUtil;
 import net.pixeldreamstudios.exclusiveitem.api.ExclusiveItemEvents;
+import net.pixeldreamstudios.exclusiveitem.util.NbtCache;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,45 +22,38 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
+import static net.pixeldreamstudios.exclusiveitem.api.ExclusiveItemConstants.NBT_EXCLUSIVE_ID;
+
 @Mixin(ItemStack.class)
 public class ItemStackMixin {
 
 	@Inject(method = "inventoryTick", at = @At("HEAD"))
 	private void bindToPlayerOnTick(World world, Entity entity, int slot, boolean selected, CallbackInfo ci) {
 		ItemStack stack = (ItemStack)(Object)this;
-		if (!world.isClient && entity instanceof PlayerEntity player) {
+		if (world.isClient || !(entity instanceof PlayerEntity player)) return;
 
-			ExclusiveItemUtil.applyAutoExclusiveRules(stack);
+		ExclusiveItemUtil.applyAutoExclusiveRules(stack);
+
+			if (!ExclusiveItemUtil.isExclusiveItem(stack)) return;
 
 			if (!ExclusiveItemCommands.isBypassing(player.getUuid()) &&
-					ExclusiveItemUtil.isExclusiveItem(stack) &&
 					!ExclusiveItemUtil.isOwned(stack) &&
 					!ExclusiveItemUtil.shouldBindOnUse(stack)) {
-
 				ExclusiveItemUtil.bindToPlayer(stack, player);
 			}
 
-			if (ExclusiveItemUtil.isExclusiveItem(stack)) {
-				NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
-				if (component != null) {
-					NbtCompound nbt = component.copyNbt();
+			if (!NbtCache.withNbt(stack, nbt -> nbt.containsUuid(NBT_EXCLUSIVE_ID), false)) {
+				NbtCache.modifyNbt(stack, nbt -> nbt.putUuid(NBT_EXCLUSIVE_ID, java.util.UUID.randomUUID()));
+			}
 
-					if (!nbt.containsUuid("exclusiveID")) {
-						nbt.putUuid("exclusiveID", java.util.UUID.randomUUID());
-						stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
-					}
-
-					if (player instanceof ServerPlayerEntity serverPlayer) {
-						boolean shouldAdd = ExclusiveItemEvents.SHOULD_ADD_TO_STORAGE
-								.invoker()
-								.shouldAdd(serverPlayer, stack);
-						if (shouldAdd) {
-							ExclusiveItemStorage.add(serverPlayer, stack);
-						}
-					}
+			if (player instanceof ServerPlayerEntity serverPlayer) {
+				boolean shouldAdd = ExclusiveItemEvents.SHOULD_ADD_TO_STORAGE
+						.invoker()
+						.shouldAdd(serverPlayer, stack);
+				if (shouldAdd) {
+					ExclusiveItemStorage.add(serverPlayer, stack);
 				}
 			}
-		}
 	}
 
 	@Inject(method = "getTooltip", at = @At("TAIL"))
